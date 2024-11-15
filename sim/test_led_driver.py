@@ -10,8 +10,7 @@ from cocotb.runner import get_runner
 from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge
 
 class FakeStrand():
-    def __init__(self, driver_dut, strand_length: int):
-        self.dut = driver_dut
+    def __init__(self, strand_length: int):
         self.sampled_data = []
         self.num_pixels = strand_length
         self.translated_bits = []
@@ -37,6 +36,7 @@ class FakeStrand():
         #remove initial low samples RESET
         while self.sampled_data[0] == 0:
             self.sampled_data = self.sampled_data[1:]
+
         #begin translating
         while self.sampled_data:
             if len(self.sampled_data) < 125:
@@ -146,15 +146,35 @@ async def test_a(dut):
 
 @cocotb.test()
 async def test_b(dut):
-    """Test for driving multiple pixels with correct color less precision"""
-    
+    """Test for driving multiple pixels with correct color less info"""
+    fs = FakeStrand(5)
     dut._log.info("Starting...")
     cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.rst_in.value = 1
     await ClockCycles(dut.clk_in, 3)
     await FallingEdge(dut.clk_in)
     dut.rst_in.value = 0
-  
+    color_cycle = [[0xAA, 0x00, 0x00], 
+                   [0x00, 0xAA, 0x00], 
+                   [0x00, 0x00, 0xAA], 
+                   [0xAA, 0xAA, 0xAA], 
+                   [0x00, 0x00, 0x00]]
+    for color in color_cycle:
+        dut.green_in.value = color[0]
+        dut.red_in.value = color[1]
+        dut.blue_in.value = color[2]
+        dut.data_in.valid = 1
+        dut._log.info(f"Setting color to G{color[0]:02X} R{color[1]:02X} B{color[2]:02X}")
+        await RisingEdge(dut.clk_in)
+        dut.data_in.valid = 0
+        for i in range(24):
+            await RisingEdge(dut.clk_in)
+            fs.add_sample(dut.data_out.value)
+    
+    fs.translate()
+    fs.translate_to_color()
+            
+
 
 def is_runner():
     """LED Driver Tester."""
