@@ -7,7 +7,7 @@
 // 1 bit = 0.8us high, 0.45us low -> 80 cycles high, 45 cycles low
 // reset = 50us low
 module led_driver #(
-    parameter NUM_LEDS = 20
+    parameter int NUM_LEDS = 20
 ) (
     input wire rst,  // active high
     input clk_in,  // 100MHz
@@ -20,7 +20,8 @@ module led_driver #(
     output logic [COUNTER_WIDTH:0] next_led_request,  // TODO: Convert to parametric
     output logic request_valid
 );
-    localparam COUNTER_WIDTH = $clog2(NUM_LEDS);
+    localparam int CounterWidth = $clog2(NUM_LEDS);
+
 
 
 
