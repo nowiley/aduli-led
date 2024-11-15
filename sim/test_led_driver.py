@@ -29,11 +29,11 @@ async def test_a(dut):
     assert dut.ready_out.value == 1, "Should still be ready after a few cycles"
     assert dut.strand_out.value == 0, "Strand should be low if not sending data"
     dut.data_in.valid = 1 # start sending data
-    await ClockCycles(dut.clk_in, 1) 
+    await ClockCycles(dut.clk_in, 1)
     dut.data_in.valid = 0
     dut._log.info("Checking correct protocol")
     bitstring = 0b00000000_10101010_00000000
-# // Assuming 100MHz clock, 10ns period -> 
+# // Assuming 100MHz clock, 10ns period ->
 # // 0 bit = 0.4us high, 0.85us low -> 40 cycles high, 85 cycles low
 # // 1 bit = 0.8us high, 0.45us low -> 80 cycles high, 45 cycles low
 # // reset = 50us low
@@ -92,4 +92,3 @@ def is_runner():
 
 if __name__ == "__main__":
     is_runner()
-

@@ -27,7 +27,7 @@ async def test_a(dut):
             dut.y_in.value = y
             if (x in range(25, 40)) and (y in range(25, 40)):
                 dut.valid_in.value = 1
-            else:  
+            else:
                 dut.valid_in.value = 0
             await RisingEdge(dut.clk_in)
     dut.tabulate_in.value = 1
@@ -57,7 +57,7 @@ async def test_b(dut):
             dut.y_in.value = y
             if (x == 26) and (y in range(0, 15)):
                 dut.valid_in.value = 1
-            else:  
+            else:
                 dut.valid_in.value = 0
             await RisingEdge(dut.clk_in)
     dut.tabulate_in.value = 1
@@ -86,12 +86,12 @@ async def test_c(dut):
             dut.y_in.value = y
             if (x in range(25, 52)) and (y in range(25, 52)):
                 dut.valid_in.value = 1
-            else:  
+            else:
                 dut.valid_in.value = 0
             await RisingEdge(dut.clk_in)
     dut.tabulate_in.value = 1
     await ClockCycles(dut.clk_in,1)
-    dut.tabulate_in.value = 0   
+    dut.tabulate_in.value = 0
     await RisingEdge(dut.valid_out)
     calc_x = dut.x_out.value
     calc_y = dut.y_out.value
@@ -108,7 +108,7 @@ async def test_c(dut):
             dut.y_in.value = y
             if (x in range(51, 71)) and (y in range(51, 71)):
                 dut.valid_in.value = 1
-            else:  
+            else:
                 dut.valid_in.value = 0
             await RisingEdge(dut.clk_in)
     dut.tabulate_in.value = 1
@@ -137,7 +137,7 @@ async def test_d(dut):
             dut.y_in.value = y
             if (x == 2) and (y == 1):
                 dut.valid_in.value = 1
-            else:  
+            else:
                 dut.valid_in.value = 0
             await RisingEdge(dut.clk_in)
     dut.tabulate_in.value = 1
@@ -148,7 +148,7 @@ async def test_d(dut):
     calc_y = dut.y_out.value
     calc_valid = dut.valid_out.value
     dut._log.info(f"calc_x = {calc_x}, calc_y = {calc_y}, calc_valid = {calc_valid}")
-    assert calc_x == 2 and calc_y == 1 and calc_valid == 1 
+    assert calc_x == 2 and calc_y == 1 and calc_valid == 1
     await ClockCycles(dut.clk_in,1)
 
 @cocotb.test()
@@ -196,7 +196,7 @@ async def test_f(dut):
             dut.y_in.value = y
             if (x in (0, 12)) and (y in (0, 35)):
                 dut.valid_in.value = 1
-            else:  
+            else:
                 dut.valid_in.value = 0
             await RisingEdge(dut.clk_in)
     dut.tabulate_in.value = 1
@@ -230,7 +230,7 @@ async def test_g(dut):
     dut.tabulate_in.value = 1
     await ClockCycles(dut.clk_in,1)
     dut.tabulate_in.value = 0
-    await ClockCycles(dut.clk_in,500) 
+    await ClockCycles(dut.clk_in,500)
     calc_x = dut.x_out.value
     calc_y = dut.y_out.value
     calc_valid = dut.valid_out.value
@@ -270,4 +270,3 @@ def is_runner():
 
 if __name__ == "__main__":
     is_runner()
-
