@@ -1,11 +1,93 @@
 import os
 import sys
 from pathlib import Path
+import typing
+from collections import deque
 
 import cocotb
 from cocotb.clock import Clock
 from cocotb.runner import get_runner
 from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge
+
+class FakeStrand():
+    def __init__(self, driver_dut, strand_length: int):
+        self.dut = driver_dut
+        self.sampled_data = []
+        self.num_pixels = strand_length
+        self.translated_bits = []
+        self.colors = []
+
+    def add_sample(self, data):
+        self.per_clock_data.append(data)
+        return
+    
+    def clear_samples(self):
+        self.per_clock_data = []
+        return
+    
+    def translate(self):
+        """Translates the sampled data into bits
+        !!! assumes clock is 100MHz and samples are taken at 10ns intervals
+        0 bit = 0.4us high, 0.85us low -> 40 cycles high, 85 cycles low
+        1 bit = 0.8us high, 0.45us low -> 80 cycles high, 45 cycles low
+        reset = >=50us low
+        """
+        #clear any previous data
+        self.translated_bits = []
+        #remove initial low samples RESET
+        while self.sampled_data[0] == 0:
+            self.sampled_data = self.sampled_data[1:]
+        #begin translating
+        while self.sampled_data:
+            if len(self.sampled_data) < 125:
+                print("Not enough for a bit, rest of the data is: ", self.sampled_data)
+                break
+            cur_segment = self.sampled_data[:125] # Grab the first 125 samples
+            self.sampled_data = self.sampled_data[125:]
+            #check if segment is a 1 bit
+            if cur_segment[:80] == [1]*80:
+                if cur_segment[80:] == [0]*45:
+                    self.translated_bits.append(1)
+                else:
+                    print("Invalid 1 bit segment: ", cur_segment)
+                    self.translated_bits.append("X")
+            #check if segment is a 0 bit
+            elif cur_segment[:40] == [1]*40:
+                if cur_segment[40:] == [0]*85:
+                    self.translated_bits.append(0)
+                else:
+                    print("Invalid 0 bit segment: ", cur_segment)
+                    self.translated_bits.append("X")
+            #check if segment is a reset
+            elif cur_segment[:50] == [0]*50:
+                self.translated_bits.append("R")
+            #invalid segment
+            else:
+                print("Invalid segment: ", cur_segment)
+                self.translated_bits.append("X")
+        print ("Translated bits: ", self.translated_bits)
+        return
+
+    def translate_to_color(self):
+        """Translates the bits into colors
+        returns list of tuples [(G_1, R_1, B_1), (G_2, R_2, B_2), ...]
+        """
+        #clear any previous
+        self.colors = []
+
+        while self.translated_bits:
+            if len(self.translated_bits) < 24:
+                print("Not enough for a color, rest of the data is: ", self.translated_bits)
+                break
+            cur_color = self.translated_bits[:24]
+            self.translated_bits = self.translated_bits[24:]
+            green = hex("".join([str(x) for x in cur_color[:8]]))
+            red = hex("".join([str(x) for x in cur_color[8:16]]))
+            blue = hex("".join([str(x) for x in cur_color[16:24]]))
+            self.colors.append((green, red, blue))
+        print("Colors: ", self.colors)
+        return
+            
 
 
 @cocotb.test()
@@ -62,6 +144,17 @@ async def test_a(dut):
                 await ClockCycles(dut.clk_in, 1)
                 assert dut.data_out.value == 0, "Data should be low in T1L period"
 
+@cocotb.test()
+async def test_b(dut):
+    """Test for driving multiple pixels with correct color less precision"""
+    
+    dut._log.info("Starting...")
+    cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
+    dut.rst_in.value = 1
+    await ClockCycles(dut.clk_in, 3)
+    await FallingEdge(dut.clk_in)
+    dut.rst_in.value = 0
+  
 
 def is_runner():
     """LED Driver Tester."""
