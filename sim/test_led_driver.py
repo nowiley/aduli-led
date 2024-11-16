@@ -45,41 +45,49 @@ async def test_a(dut):
         dut.strand_out.value == 1
     ), "Strand should be high immediately after valid data in"
 
-    for led_idx in range(3):
-        for i in range(24):
-            if i == 12:
-                dut.color_valid.value = 1
-            elif i == 13:
-                dut.color_valid.value = 0
-            cur_bit = (bitstring >> (24 - 1 - i)) & 0x01
-            dut._log.info(f"Checking bit {i} = {cur_bit}")
-            assert dut.strand_out.value == 1, "Strand should be high at the start"
-            if cur_bit == 0:
-                dut._log.info("Checking T0H 40 cycles high")
-                for j in range(40):
-                    assert (
-                        dut.strand_out.value == 1
-                    ), "Data should be high in T0H period"
-                    await ClockCycles(dut.clk_in, 1)
-                dut._log.info("Checking T0L 85 cycles low")
-                for j in range(85):
-                    assert dut.strand_out.value == 0, "Data should be low in T0L period"
-                    await ClockCycles(dut.clk_in, 1)
-            else:
-                dut._log.info("Checking T1H 80 cycles high")
-                for j in range(80):
-                    assert (
-                        dut.strand_out.value == 1
-                    ), "Data should be high in T1H period"
-                    await ClockCycles(dut.clk_in, 1)
-                dut._log.info("Checking T1L 45 cycles low")
-                for j in range(45):
-                    assert dut.strand_out.value == 0, "Data should be low in T1L period"
-                    await ClockCycles(dut.clk_in, 1)
-    dut._log.info("Checking reset")
-    for j in range(5000):
-        assert dut.strand_out.value == 0, "Data should be low in reset period"
+    for re_writes in range(3):
+        for led_idx in range(3):
+            for i in range(24):
+                if i == 12:
+                    dut.color_valid.value = 1
+                elif i == 13:
+                    dut.color_valid.value = 0
+                cur_bit = (bitstring >> (24 - 1 - i)) & 0x01
+                dut._log.info(f"Checking bit {i} = {cur_bit}")
+                assert dut.strand_out.value == 1, "Strand should be high at the start"
+                if cur_bit == 0:
+                    dut._log.info("Checking T0H 40 cycles high")
+                    for j in range(40):
+                        assert (
+                            dut.strand_out.value == 1
+                        ), "Data should be high in T0H period"
+                        await ClockCycles(dut.clk_in, 1)
+                    dut._log.info("Checking T0L 85 cycles low")
+                    for j in range(85):
+                        assert (
+                            dut.strand_out.value == 0
+                        ), "Data should be low in T0L period"
+                        await ClockCycles(dut.clk_in, 1)
+                else:
+                    dut._log.info("Checking T1H 80 cycles high")
+                    for j in range(80):
+                        assert (
+                            dut.strand_out.value == 1
+                        ), "Data should be high in T1H period"
+                        await ClockCycles(dut.clk_in, 1)
+                    dut._log.info("Checking T1L 45 cycles low")
+                    for j in range(45):
+                        assert (
+                            dut.strand_out.value == 0
+                        ), "Data should be low in T1L period"
+                        await ClockCycles(dut.clk_in, 1)
+        dut._log.info("Checking reset")
+        for j in range(5000):
+            assert dut.strand_out.value == 0, "Data should be low in reset period"
+            await ClockCycles(dut.clk_in, 1)
+        # need to wait one more as it switches through IDLE
         await ClockCycles(dut.clk_in, 1)
+        assert dut.strand_out.value == 1, "Strand should be high after reset"
 
 
 def is_runner():
