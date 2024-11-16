@@ -44,8 +44,7 @@ module led_driver #(
     } bit_state;
 
     // Derivative signals
-    wire sending = state == SEND;
-    wire incr_led_counter = (state == IDLE && color_valid) || (state == SEND && bit_end && last_bit && next_valid);
+    wire incr_led_counter = (state == IDLE && color_valid) || (state == SEND && bit_end && last_bit && next_valid && !last_led);
 
     // LED counter
     wire reset_led_counter = (state == RESET && reset_end) || force_reset;
@@ -66,7 +65,7 @@ module led_driver #(
     ) bit_counter_module (
         .clk_in(clk_in),
         .rst_in(rst_in || reset_led_counter),
-        .evt_in(sending && bit_end),
+        .evt_in(state == SEND && bit_end),
         .count_out(bit_counter)
     );
     wire last_bit = bit_counter == ColorWidth * 3 - 1;
@@ -91,13 +90,13 @@ module led_driver #(
     logic [$clog2(CycMax) - 1:0] cyc_counter;
 
     // Bit counter
-    wire counter_reset = bit_end || reset_led_counter;  // FIXME: improve this
+    wire counter_reset = (state == SEND && bit_end) || (state == RESET && reset_end) || reset_led_counter;  // FIXME: improve this
     evt_counter #(
         .MAX_COUNT(CycMax)
     ) cyc_counter_module (
         .clk_in(clk_in),
         .rst_in(rst_in || counter_reset),
-        .evt_in(sending),
+        .evt_in(state == SEND || state == RESET),
         .count_out(cyc_counter)
     );
 
