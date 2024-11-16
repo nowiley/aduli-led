@@ -113,17 +113,6 @@ module led_driver #(
     wire bit_end = cyc_counter == bit_end_cyc - 1;
     wire reset_end = cyc_counter == RESCyc - 1;
 
-    // Input handling
-    always_ff @(posedge clk_in) begin
-        if (rst_in) begin
-            next_valid <= 0;
-        end else if (color_valid && state == SEND) begin
-            next_red   <= red_in;
-            next_green <= green_in;
-            next_blue  <= blue_in;
-            next_valid <= 1;
-        end
-    end
 
     function static logic start_bit;
         return 1'b1;
@@ -141,6 +130,7 @@ module led_driver #(
     // Signal driving
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
+            next_valid <= 0;
             state <= IDLE;
             strand_out <= 1'b0;
         end else if (force_reset) begin
@@ -176,7 +166,13 @@ module led_driver #(
                             bit_buffer <= shift_buffer();
                             strand_out <= start_bit();
                         end
-                    end else if (bit_change) begin
+                    end else if (color_valid) begin
+                        next_red   <= red_in;
+                        next_green <= green_in;
+                        next_blue  <= blue_in;
+                        next_valid <= 1;
+                    end
+                    if (bit_change) begin
                         strand_out <= 1'b0;
                     end
                 end

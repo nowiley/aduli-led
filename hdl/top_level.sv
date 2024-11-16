@@ -11,14 +11,14 @@ module top_level (
 );
 
 // instantiate led_driver module
-led_driver led_driver_inst (
-    .NUM_LEDS(2),
-    .rst(btn[0]),
+led_driver #(.NUM_LEDS(2)) 
+    led_driver_inst (    
+    .rst_in(btn[0]),
     .clk_in(clk_100mhz),
     .force_reset(btn[1]),
-    .green_in(sw[23:16]),
-    .red_in(sw[15:8]),
-    .blue_in(sw[7:0]),
+    .green_in({2'b0, sw[15:10]}),
+    .red_in({3'b0, sw[9:5]}),
+    .blue_in({3'b0, sw[4:0]}),
     .color_valid(1'b1),
     .strand_out(strand_out[0]),
     .next_led_request(),
