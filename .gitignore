@@ -1,1 +1,7 @@
 .DS_Store
+
+# cocatb
+sim_build/
+
+# Python
+*.pyc
