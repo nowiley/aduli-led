@@ -90,7 +90,7 @@ class FakeStrand():
             
 
 
-# @cocotb.test()
+@cocotb.test()
 async def test_a(dut):
     """Test for driving first pixel a correct color"""
     dut._log.info("Starting...")
