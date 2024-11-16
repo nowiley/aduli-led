@@ -95,9 +95,7 @@ class FakeStrand():
             
 
 
-@cocotb.test()
-async def test_a(dut):
-    """Test for driving first pixel a correct color"""
+async def setup(dut):
     dut._log.info("Starting...")
     cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.rst_in.value = 1
@@ -114,9 +112,20 @@ async def test_a(dut):
     await ClockCycles(dut.clk_in, 3)
     # assert dut.ready_out.value == 1, "Should still be ready after a few cycles"
     assert dut.strand_out.value == 0, "Strand should be low if not sending data"
-    dut.color_valid.value = 1  # start sending data
+    dut._log.info("Setup complete")
+
+
+async def start(dut):
+    dut.color_valid.value = 1
     await ClockCycles(dut.clk_in, 1)
     dut.color_valid.value = 0
+
+
+@cocotb.test()
+async def test_a(dut):
+    """Test for driving first pixel a correct color"""
+    await setup(dut)
+    await start(dut)
     dut._log.info("Checking correct protocol")
     bitstring = (
         (int(dut.green_in.value) & 0xFF) << 16
@@ -192,20 +201,42 @@ async def test_b(dut):
                    [0x00, 0x00, 0xAA], 
                    [0xAA, 0xAA, 0xAA], 
                    [0x00, 0x00, 0x00]]
-    for color in color_cycle:
+    for c, color in enumerate(color_cycle):
         dut.green_in.value = color[0]
         dut.red_in.value = color[1]
         dut.blue_in.value = color[2]
         dut.color_valid = 1
         dut._log.info(f"Setting color to G{color[0]:02X} R{color[1]:02X} B{color[2]:02X}")
-        await RisingEdge(dut.clk_in)
-        dut.color_valid = 0
+        await ClockCycles(dut.clk_in, 1)
         for i in range(24*125):
-            await RisingEdge(dut.clk_in)
+            await FallingEdge(dut.clk_in)
             fs.add_sample(dut.strand_out.value)
+            if i == 1738:
+                dut.color_valid.value = 1
+                dut.green_in.value = color_cycle[(c+1)%NUM_LEDS][0]
+                dut.red_in.value = color_cycle[(c+1)%NUM_LEDS][1]
+                dut.blue_in.value = color_cycle[(c+1)%NUM_LEDS][2]
+            else: 
+                dut.color_valid.value = 0
+
     fs.translate()
     fs.translate_to_color() 
     assert fs.colors == [('0xaa', '0x0', '0x0'), ('0x0', '0xaa', '0x0'), ('0x0', '0x0', '0xaa'), ('0xaa', '0xaa', '0xaa'), ('0x0', '0x0', '0x0')], "Colors should be correct"
+
+
+@cocotb.test()
+async def test_timeout(dut):
+    """Test for timeout behavior if we stop providing data part way through strand"""
+    await setup(dut)
+    await start(dut)
+    dut._log.info("Checking correct timeout behavior")
+    await ClockCycles(dut.clk_in, 1)
+    dut._log.info("Should be sending a pixel...")
+    for i in range(24):
+        dut._log.info(f"Waiting for bit {i}")
+        await ClockCycles(dut.clk_in, 125)  # wait until bit finishes
+    assert dut.strand_out.value == 0, "Strand should be low due to reset"
+    dut._log.info("Should be in reset...")
 
 
 def is_runner():

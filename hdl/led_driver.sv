@@ -164,15 +164,13 @@ module led_driver #(
                 SEND: begin
                     if (bit_end) begin
                         if (last_bit) begin
-                            if (last_led) begin
-                                strand_out <= 1'b0;  // should already be low but just in case
-                                state <= RESET;
-                            end else if (next_valid) begin
+                            if (next_valid && !last_led) begin
                                 bit_buffer <= build_buffer();
                                 strand_out <= start_bit();
                                 next_valid <= 0;
                             end else begin
-                                state <= IDLE;
+                                strand_out <= 1'b0;  // should already be low but just in case
+                                state <= RESET;
                             end
                         end else begin
                             bit_buffer <= shift_buffer();
