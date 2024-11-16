@@ -44,10 +44,13 @@ module led_driver #(
     } bit_state;
 
     // Derivative signals
-    wire incr_led_counter = (state == IDLE && color_valid) || (state == SEND && bit_end && last_bit && next_valid && !last_led);
+    wire incr_led_counter = (
+        (state == IDLE && color_valid)
+        || (state == SEND && bit_end && last_bit && next_valid && !last_led)
+        || (state == RESET && reset_end));
 
     // LED counter
-    wire reset_led_counter = (state == RESET && reset_end) || force_reset;
+    wire reset_led_counter = force_reset;
     evt_counter #(
         .MAX_COUNT(NUM_LEDS)
     ) led_counter_module (
