@@ -45,9 +45,10 @@ module led_driver #(
 
     // Derivative signals
     wire incr_led_counter = (
-        (state == IDLE && color_valid)
+        (state == IDLE && (color_valid || next_valid))
         || (state == SEND && bit_end && last_bit && next_valid && !last_led)
-        || (state == RESET && reset_end));
+    //  || (state == RESET && reset_end)  // this gets handled when leaving IDLE state
+    );
 
     // LED counter
     wire reset_led_counter = force_reset;
