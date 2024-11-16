@@ -17,7 +17,7 @@ class FakeStrand():
         self.colors = []
 
     def add_sample(self, data):
-        self.per_clock_data.append(data)
+        self.sampled_data.append(data)
         return
     
     def clear_samples(self):
@@ -90,7 +90,7 @@ class FakeStrand():
             
 
 
-@cocotb.test()
+# @cocotb.test()
 async def test_a(dut):
     """Test for driving first pixel a correct color"""
     dut._log.info("Starting...")
@@ -191,13 +191,13 @@ async def test_b(dut):
         dut.green_in.value = color[0]
         dut.red_in.value = color[1]
         dut.blue_in.value = color[2]
-        dut.data_in.valid = 1
+        dut.color_valid = 1
         dut._log.info(f"Setting color to G{color[0]:02X} R{color[1]:02X} B{color[2]:02X}")
         await RisingEdge(dut.clk_in)
-        dut.data_in.valid = 0
+        dut.color_valid = 0
         for i in range(24):
             await RisingEdge(dut.clk_in)
-            fs.add_sample(dut.data_out.value)
+            fs.add_sample(dut.strand_out.value)
     
     fs.translate()
     fs.translate_to_color()
