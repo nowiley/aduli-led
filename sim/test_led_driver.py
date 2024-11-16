@@ -77,6 +77,7 @@ def is_runner():
     runner.build(
         sources=sources,
         hdl_toplevel="led_driver",
+        includes=[proj_path / "hdl"],
         always=True,
         build_args=build_test_args,
         parameters=parameters,
