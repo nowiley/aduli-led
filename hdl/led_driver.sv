@@ -57,6 +57,7 @@ module led_driver #(
         .evt_in(incr_led_counter),
         .count_out(next_led_request)
     );
+    wire last_led = next_led_request == 0;
 
     // Bit counter
     logic [$clog2(ColorWidth*3) - 1:0] bit_counter;
@@ -160,7 +161,10 @@ module led_driver #(
                 SEND: begin
                     if (bit_end) begin
                         if (last_bit) begin
-                            if (next_valid) begin
+                            if (last_led) begin
+                                strand_out <= 1'b0;  // should already be low but just in case
+                                state <= RESET;
+                            end else if (next_valid) begin
                                 bit_buffer <= build_buffer();
                                 strand_out <= start_bit();
                                 next_valid <= 0;
