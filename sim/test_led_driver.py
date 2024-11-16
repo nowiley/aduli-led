@@ -9,6 +9,8 @@ from cocotb.clock import Clock
 from cocotb.runner import get_runner
 from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge
 
+NUM_LEDS = 5
+
 class FakeStrand():
     def __init__(self, strand_length: int):
         self.sampled_data = []
@@ -81,9 +83,12 @@ class FakeStrand():
                 break
             cur_color = self.translated_bits[:24]
             self.translated_bits = self.translated_bits[24:]
-            green = hex("".join([str(x) for x in cur_color[:8]]))
-            red = hex("".join([str(x) for x in cur_color[8:16]]))
-            blue = hex("".join([str(x) for x in cur_color[16:24]]))
+            if "R" in cur_color or "X" in cur_color:
+                print("Invalid color: ", cur_color)
+                continue 
+            green = hex(int("".join([str(bit) for bit in cur_color[:8]]), 2))
+            red = hex(int("".join([str(bit) for bit in cur_color[8:16]]), 2))
+            blue = hex(int("".join([str(bit) for bit in cur_color[16:24]]), 2))
             self.colors.append((green, red, blue))
         print("Colors: ", self.colors)
         return
@@ -128,7 +133,7 @@ async def test_a(dut):
     ), "Strand should be high immediately after valid data in"
 
     for re_writes in range(3):
-        for led_idx in range(3):
+        for led_idx in range(NUM_LEDS):
             for i in range(24):
                 # fairly ugly way to set this (only needs to be single cycle) but it works
                 if i == 12:
@@ -175,7 +180,7 @@ async def test_a(dut):
 @cocotb.test()
 async def test_b(dut):
     """Test for driving multiple pixels with correct color less info"""
-    fs = FakeStrand(5)
+    fs = FakeStrand(NUM_LEDS)
     dut._log.info("Starting...")
     cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.rst_in.value = 1
@@ -195,13 +200,12 @@ async def test_b(dut):
         dut._log.info(f"Setting color to G{color[0]:02X} R{color[1]:02X} B{color[2]:02X}")
         await RisingEdge(dut.clk_in)
         dut.color_valid = 0
-        for i in range(24):
+        for i in range(24*125):
             await RisingEdge(dut.clk_in)
             fs.add_sample(dut.strand_out.value)
-    
     fs.translate()
-    fs.translate_to_color()
-            
+    fs.translate_to_color() 
+    assert fs.colors == [('0xaa', '0x0', '0x0'), ('0x0', '0xaa', '0x0'), ('0x0', '0x0', '0xaa'), ('0xaa', '0xaa', '0xaa'), ('0x0', '0x0', '0x0')], "Colors should be correct"
 
 
 def is_runner():
@@ -213,7 +217,7 @@ def is_runner():
     sources = [proj_path / "hdl" / "led_driver.sv"]
     build_test_args = ["-Wall"]
     parameters = {
-        "NUM_LEDS": 3,
+        "NUM_LEDS": NUM_LEDS,
     }
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
