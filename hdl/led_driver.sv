@@ -64,7 +64,7 @@ module led_driver #(
     ) bit_counter_module (
         .clk_in(clk_in),
         .rst_in(rst_in || reset_led_counter),
-        .evt_in(sending),
+        .evt_in(sending && bit_end),
         .count_out(bit_counter)
     );
     wire last_bit = bit_counter == ColorWidth * 3 - 1;
