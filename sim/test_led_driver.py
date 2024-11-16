@@ -48,6 +48,7 @@ async def test_a(dut):
     for re_writes in range(3):
         for led_idx in range(3):
             for i in range(24):
+                # fairly ugly way to set this (only needs to be single cycle) but it works
                 if i == 12:
                     dut.color_valid.value = 1
                 elif i == 13:
