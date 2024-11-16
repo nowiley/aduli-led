@@ -47,21 +47,21 @@ async def test_a(dut):
         if cur_bit == 0:
             dut._log.info("Checking T0H 40 cycles high")
             for j in range(40):
-                await ClockCycles(dut.clk_in, 1)
                 assert dut.strand_out.value == 1, "Data should be high in T0H period"
+                await ClockCycles(dut.clk_in, 1)
             dut._log.info("Checking T0L 85 cycles low")
             for j in range(85):
-                await ClockCycles(dut.clk_in, 1)
                 assert dut.strand_out.value == 0, "Data should be low in T0L period"
+                await ClockCycles(dut.clk_in, 1)
         else:
             dut._log.info("Checking T1H 80 cycles high")
             for j in range(80):
-                await ClockCycles(dut.clk_in, 1)
                 assert dut.strand_out.value == 1, "Data should be high in T1H period"
+                await ClockCycles(dut.clk_in, 1)
             dut._log.info("Checking T1L 45 cycles low")
             for j in range(45):
-                await ClockCycles(dut.clk_in, 1)
                 assert dut.strand_out.value == 0, "Data should be low in T1L period"
+                await ClockCycles(dut.clk_in, 1)
 
 
 def is_runner():
