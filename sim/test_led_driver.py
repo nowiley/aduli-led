@@ -8,9 +8,7 @@ from cocotb.runner import get_runner
 from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge
 
 
-@cocotb.test()
-async def test_a(dut):
-    """Test for driving first pixel a correct color"""
+async def setup(dut):
     dut._log.info("Starting...")
     cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
     dut.rst_in.value = 1
@@ -27,9 +25,20 @@ async def test_a(dut):
     await ClockCycles(dut.clk_in, 3)
     # assert dut.ready_out.value == 1, "Should still be ready after a few cycles"
     assert dut.strand_out.value == 0, "Strand should be low if not sending data"
-    dut.color_valid.value = 1  # start sending data
+    dut._log.info("Setup complete")
+
+
+async def start(dut):
+    dut.color_valid.value = 1
     await ClockCycles(dut.clk_in, 1)
     dut.color_valid.value = 0
+
+
+@cocotb.test()
+async def test_a(dut):
+    """Test for driving first pixel a correct color"""
+    await setup(dut)
+    await start(dut)
     dut._log.info("Checking correct protocol")
     bitstring = (
         (int(dut.green_in.value) & 0xFF) << 16
@@ -89,6 +98,21 @@ async def test_a(dut):
         # need to wait one more as it switches through IDLE
         await ClockCycles(dut.clk_in, 1)
         assert dut.strand_out.value == 1, "Strand should be high after reset"
+
+
+@cocotb.test()
+async def test_timeout(dut):
+    """Test for timeout behavior if we stop providing data part way through strand"""
+    await setup(dut)
+    await start(dut)
+    dut._log.info("Checking correct timeout behavior")
+    await ClockCycles(dut.clk_in, 1)
+    dut._log.info("Should be sending a pixel...")
+    for i in range(24):
+        dut._log.info(f"Waiting for bit {i}")
+        await ClockCycles(dut.clk_in, 125)  # wait until bit finishes
+    assert dut.strand_out.value == 0, "Strand should be low due to reset"
+    dut._log.info("Should be in reset...")
 
 
 def is_runner():
