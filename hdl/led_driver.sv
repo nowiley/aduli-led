@@ -45,15 +45,16 @@ module led_driver #(
 
     // Derivative signals
     wire sending = state == SEND;
+    wire incr_led_counter = (state == IDLE && color_valid) || (state == SEND && bit_end && last_bit && next_valid);
 
     // LED counter
-    wire reset_led_counter = (next_led_request == NUM_LEDS - 1) || force_reset;
+    wire reset_led_counter = (state == RESET && reset_end) || force_reset;
     evt_counter #(
         .MAX_COUNT(NUM_LEDS)
     ) led_counter_module (
         .clk_in(clk_in),
         .rst_in(rst_in || reset_led_counter),
-        .evt_in(sending && last_bit && bit_end),
+        .evt_in(incr_led_counter),
         .count_out(next_led_request)
     );
 
@@ -106,6 +107,7 @@ module led_driver #(
 
     wire bit_change = cyc_counter == bit_change_cyc - 1;
     wire bit_end = cyc_counter == bit_end_cyc - 1;
+    wire reset_end = cyc_counter == RESCyc - 1;
 
     // Input handling
     always_ff @(posedge clk_in) begin
@@ -174,6 +176,9 @@ module led_driver #(
                     end
                 end
                 RESET: begin  // 50us reset
+                    if (reset_end) begin
+                        state <= IDLE;
+                    end
                 end
                 default: begin
                 end
