@@ -31,7 +31,11 @@ async def test_a(dut):
     await ClockCycles(dut.clk_in, 1)
     dut.color_valid.value = 0
     dut._log.info("Checking correct protocol")
-    bitstring = 0b00000000_10101010_00000000
+    bitstring = (
+        (int(dut.green_in.value) & 0xFF) << 16
+        | (int(dut.red_in.value) & 0xFF) << 8
+        | (int(dut.blue_in.value) & 0xFF)
+    )
     # // Assuming 100MHz clock, 10ns period ->
     # // 0 bit = 0.4us high, 0.85us low -> 40 cycles high, 85 cycles low
     # // 1 bit = 0.8us high, 0.45us low -> 80 cycles high, 45 cycles low
