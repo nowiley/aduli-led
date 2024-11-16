@@ -201,17 +201,24 @@ async def test_b(dut):
                    [0x00, 0x00, 0xAA], 
                    [0xAA, 0xAA, 0xAA], 
                    [0x00, 0x00, 0x00]]
-    for color in color_cycle:
+    for c, color in enumerate(color_cycle):
         dut.green_in.value = color[0]
         dut.red_in.value = color[1]
         dut.blue_in.value = color[2]
         dut.color_valid = 1
         dut._log.info(f"Setting color to G{color[0]:02X} R{color[1]:02X} B{color[2]:02X}")
-        await RisingEdge(dut.clk_in)
-        dut.color_valid = 0
+        await ClockCycles(dut.clk_in, 1)
         for i in range(24*125):
-            await RisingEdge(dut.clk_in)
+            await FallingEdge(dut.clk_in)
             fs.add_sample(dut.strand_out.value)
+            if i == 1738:
+                dut.color_valid.value = 1
+                dut.green_in.value = color_cycle[(c+1)%NUM_LEDS][0]
+                dut.red_in.value = color_cycle[(c+1)%NUM_LEDS][1]
+                dut.blue_in.value = color_cycle[(c+1)%NUM_LEDS][2]
+            else: 
+                dut.color_valid.value = 0
+
     fs.translate()
     fs.translate_to_color() 
     assert fs.colors == [('0xaa', '0x0', '0x0'), ('0x0', '0xaa', '0x0'), ('0x0', '0x0', '0xaa'), ('0xaa', '0xaa', '0xaa'), ('0x0', '0x0', '0x0')], "Colors should be correct"
