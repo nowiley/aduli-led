@@ -44,8 +44,8 @@ async def test_a(dut):
     assert (
         dut.strand_out.value == 1
     ), "Strand should be high immediately after valid data in"
-    for i in range(25):
-        cur_bit = (bitstring >> (24 - i)) & 0x01
+    for i in range(24):
+        cur_bit = (bitstring >> (24 - 1 - i)) & 0x01
         dut._log.info(f"Checking bit {i} = {cur_bit}")
         assert dut.strand_out.value == 1, "Strand should be high at the start"
         if cur_bit == 0:
