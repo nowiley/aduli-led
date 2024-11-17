@@ -75,11 +75,11 @@ module led_driver #(
     wire last_bit = bit_counter == ColorWidth * 3 - 1;
 
     localparam int  // Signal timing per WS2812B datasheet (in ns units
-    T0H = 400,  // 0.4us high
-    T1H = 800,  // 0.8us high
-    T0L = 850,  // 0.85us low
-    T1L = 450,  // 0.45us low
-    RES = 50000;  // 50us reset
+    T0H = 500,  // 0.4us high
+    T1H = 1200,  // 0.8us high
+    T0L = 2000,  // 0.85us low
+    T1L = 1300,  // 0.45us low
+    RES = 250000;  // 50us reset
 
     // Cycles for bit timing
     localparam int  //
@@ -121,10 +121,10 @@ module led_driver #(
         return {bit_buffer[ColorWidth*3-2:0], 1'b0};
     endfunction
     function static logic [ColorWidth*3-1:0] build_buffer;
-        return {next_green, next_red, next_blue};
+        return {next_green, next_blue, next_red};
     endfunction
     function static logic [ColorWidth*3-1:0] build_buffer_direct;
-        return {green_in, red_in, blue_in};
+        return {green_in, blue_in, red_in};
     endfunction
 
     // Signal driving

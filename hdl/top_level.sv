@@ -10,15 +10,17 @@ module top_level (
     output logic [3:0] strand_out // strand output wire PMODA
 );
 
+assign strand_out[1] = clk_100mhz; // FOR DEBUGGING
+
 // instantiate led_driver module
-led_driver #(.NUM_LEDS(2)) 
+led_driver #(.NUM_LEDS(10)) 
     led_driver_inst (    
     .rst_in(btn[0]),
     .clk_in(clk_100mhz),
     .force_reset(btn[1]),
-    .green_in({2'b0, sw[15:10]}),
-    .red_in({3'b0, sw[9:5]}),
-    .blue_in({3'b0, sw[4:0]}),
+    .red_in({sw[15:11], 3'b000}),
+    .green_in({sw[10:5], 2'b000}),
+    .blue_in({sw[4:0], 3'b000}),
     .color_valid(1'b1),
     .strand_out(strand_out[0]),
     .next_led_request(),
