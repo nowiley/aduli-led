@@ -3,7 +3,8 @@
 `default_nettype none
 
 module top_level #(
-    localparam int NUM_LEDS = 2
+    parameter int NUM_LEDS = 2,
+    parameter int COLOR_WIDTH = 8
 ) (
     input wire clk_100mhz,
     output logic [15:0] led,  // green leds
@@ -14,7 +15,8 @@ module top_level #(
 
     // instantiate led_driver module
     led_driver #(
-        .NUM_LEDS(NUM_LEDS)
+        .NUM_LEDS(NUM_LEDS),
+        .COLOR_WIDTH(COLOR_WIDTH)
     ) led_driver_inst (
         .rst_in(btn[0]),
         .clk_in(clk_100mhz),
