@@ -23,7 +23,7 @@ module led_driver #(
     input wire color_valid,  //single cycle pulse
     output logic strand_out,
     output logic [CounterWidth-1:0] next_led_request,
-    output logic request_valid
+    output logic request_valid  // FIXME: unused
 );
     logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
     logic next_valid;
