@@ -13,12 +13,14 @@ module top_level #(
     output logic [3:0] strand_out  // strand output wire PMODA
 );
 
+    wire rst_in = btn[0];
+
     // instantiate led_driver module
     led_driver #(
         .NUM_LEDS(NUM_LEDS),
         .COLOR_WIDTH(COLOR_WIDTH)
     ) led_driver_inst (
-        .rst_in(btn[0]),
+        .rst_in(rst_in),
         .clk_in(clk_100mhz),
         .force_reset(btn[1]),
         .green_in({2'b0, sw[15:10]}),
