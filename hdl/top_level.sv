@@ -2,7 +2,9 @@
 `include "driver/led_driver.sv"
 `default_nettype none
 
-module top_level (
+module top_level #(
+    localparam int NUM_LEDS = 2
+) (
     input wire clk_100mhz,
     output logic [15:0] led,  // green leds
     input wire [3:0] btn,  // push buttons
@@ -12,7 +14,7 @@ module top_level (
 
     // instantiate led_driver module
     led_driver #(
-        .NUM_LEDS(2)
+        .NUM_LEDS(NUM_LEDS)
     ) led_driver_inst (
         .rst_in(btn[0]),
         .clk_in(clk_100mhz),
