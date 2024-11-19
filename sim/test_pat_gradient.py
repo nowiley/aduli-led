@@ -18,6 +18,8 @@ async def test_a(dut):
     dut._log.info("Starting...")
     cocotb.start_soon(Clock(dut.clk_in, 10, units="ns").start())
 
+    await ClockCycles(dut.clk_in, 2)  # check the pre-reset behavior
+
     dut.rst_in.value = 1
     await ClockCycles(dut.clk_in, 3)
     await FallingEdge(dut.clk_in)
