@@ -245,7 +245,7 @@ def is_runner():
     sim = os.getenv("SIM", "icarus")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
-    sources = [proj_path / "hdl" / "led_driver.sv"]
+    sources = [proj_path / "hdl" / "driver" / "led_driver.sv"]
     build_test_args = ["-Wall"]
     parameters = {
         "NUM_LEDS": NUM_LEDS,
