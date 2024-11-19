@@ -11,25 +11,25 @@
 module led_driver #(
     parameter int CLOCK_SPEED = 100_000_000,  // 100MHz
     parameter int NUM_LEDS = 20,
-    localparam int CounterWidth = $clog2(NUM_LEDS),
-    localparam int ColorWidth = 8
+    parameter int COLOR_WIDTH = 8,
+    localparam int CounterWidth = $clog2(NUM_LEDS)
 ) (
     input wire rst_in,  // active high
     input wire clk_in,  // 100MHz
     input wire force_reset,  // active high
-    input wire [ColorWidth-1:0] green_in,
-    input wire [ColorWidth-1:0] red_in,
-    input wire [ColorWidth-1:0] blue_in,
+    input wire [COLOR_WIDTH-1:0] green_in,
+    input wire [COLOR_WIDTH-1:0] red_in,
+    input wire [COLOR_WIDTH-1:0] blue_in,
     input wire color_valid,  //single cycle pulse
     output logic strand_out,
     output logic [CounterWidth-1:0] next_led_request,
     output logic request_valid
 );
-    logic [ColorWidth-1:0] next_red, next_green, next_blue;
+    logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
     logic next_valid;
 
-    logic [ColorWidth*3 - 1:0] bit_buffer;
-    wire current_bit = bit_buffer[ColorWidth*3-1];
+    logic [COLOR_WIDTH*3 - 1:0] bit_buffer;
+    wire current_bit = bit_buffer[COLOR_WIDTH*3-1];
 
     // State machine
     enum logic [1:0] {
@@ -63,16 +63,16 @@ module led_driver #(
     wire last_led = next_led_request == 0;
 
     // Bit counter
-    logic [$clog2(ColorWidth*3) - 1:0] bit_counter;
+    logic [$clog2(COLOR_WIDTH*3) - 1:0] bit_counter;
     evt_counter #(
-        .MAX_COUNT(ColorWidth * 3)
+        .MAX_COUNT(COLOR_WIDTH * 3)
     ) bit_counter_module (
         .clk_in(clk_in),
         .rst_in(rst_in || reset_led_counter),
         .evt_in(state == SEND && bit_end),
         .count_out(bit_counter)
     );
-    wire last_bit = bit_counter == ColorWidth * 3 - 1;
+    wire last_bit = bit_counter == COLOR_WIDTH * 3 - 1;
 
     localparam int  // Signal timing per WS2812B datasheet (in ns units
     T0H = 400,  // 0.4us high
@@ -117,13 +117,13 @@ module led_driver #(
     function static logic start_bit;
         return 1'b1;
     endfunction
-    function static logic [ColorWidth*3-1:0] shift_buffer;
-        return {bit_buffer[ColorWidth*3-2:0], 1'b0};
+    function static logic [COLOR_WIDTH*3-1:0] shift_buffer;
+        return {bit_buffer[COLOR_WIDTH*3-2:0], 1'b0};
     endfunction
-    function static logic [ColorWidth*3-1:0] build_buffer;
+    function static logic [COLOR_WIDTH*3-1:0] build_buffer;
         return {next_green, next_red, next_blue};
     endfunction
-    function static logic [ColorWidth*3-1:0] build_buffer_direct;
+    function static logic [COLOR_WIDTH*3-1:0] build_buffer_direct;
         return {green_in, red_in, blue_in};
     endfunction
 
