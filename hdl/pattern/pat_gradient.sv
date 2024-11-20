@@ -26,9 +26,9 @@ module pat_gradient #(
             blue_out <= 0;
             request_valid <= 0;
         end else begin
-            red_out <= (next_led_request << 2);
-            green_out <= 0;
-            blue_out <= (1 << COLOR_WIDTH) - 1 - (next_led_request << 2);
+            red_out <= 0;
+            green_out <= (next_led_request << 4);
+            blue_out <= (1 << COLOR_WIDTH) - 1 - (next_led_request << 4);
             current_led <= next_led_request;
             request_valid <= 1;
         end
