@@ -79,7 +79,7 @@ module led_driver #(
     T1H = 800,  // 0.8us high
     T0L = 850,  // 0.85us low
     T1L = 450,  // 0.45us low
-    RES = 50000;  // 50us reset
+    RES = 55000;  // >50us reset
 
     // Cycles for bit timing
     localparam int  //
