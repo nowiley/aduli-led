@@ -5,3 +5,7 @@ sim_build/
 
 # Python
 *.pyc
+
+# lab_bc_client outputs
+obj/
+_history/
