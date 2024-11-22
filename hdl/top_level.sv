@@ -5,7 +5,7 @@
 `include "pixel/rgb_to_ycrcb.sv"
 `include "pixel/channel_select.sv"
 `include "pixel/threshold.sv"
-`include "math/lab05_ssc.sv"
+`include "driver/lab05_ssc.sv"
 `include "pixel/center_of_mass.sv"
 `include "hdmi/video_sig_gen.sv"
 `include "pixel/video_mux.sv"
