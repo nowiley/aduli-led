@@ -506,7 +506,7 @@ module top_level (
     video_mux mvm (
         .bg_in(display_choice),  //choose background
         .target_in(target_choice),  //choose target
-        .camera_pixel_in({fb_red, fb_green, fb_blue}),  //DONE: needs (PS2)
+        .camera_pixel_in({fb_red_ps2, fb_green_ps2, fb_blue_ps2}),  //DONE: needs (PS2)
         .camera_y_in(y_ps6),  //luminance DONE: needs (PS6)
         .channel_in(selected_channel_ps5),  //current channel being drawn DONE: needs (PS5)
         .thresholded_pixel_in(mask),  //one bit mask signal DONE: needs (PS4) - NOT USED
