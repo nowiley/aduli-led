@@ -17,7 +17,7 @@ module top_level #(
     output logic [2:0]  rgb1,
 
     // LED 
-    output logic [3:0] strand_out  // strand output wire PMODA
+    output logic [3:0] strand_out,  // strand output wire PMODA
 
     // CAMERA BUS
     input wire [7:0]    camera_d, // 8 parallel data wires
