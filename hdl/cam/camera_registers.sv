@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "sig/i2c_master.v"
+`include "driver/i2c_master.v"
 `default_nettype none
 
 module camera_registers #(
