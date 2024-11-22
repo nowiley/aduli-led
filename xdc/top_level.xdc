@@ -41,6 +41,14 @@ set_property -dict {PACKAGE_PIN C11 IOSTANDARD LVCMOS33} [get_ports "cam_vsync" 
 # jab[5]
 set_property -dict {PACKAGE_PIN G16 IOSTANDARD LVCMOS33 PULLTYPE PULLUP} [get_ports "i2c_scl" ]
 
+#pmodb[0]
+set_property -dict {PACKAGE_PIN H18 IOSTANDARD LVCMOS33}  [ get_ports "strand_out[0]" ]
+#pmodb[1]
+set_property -dict {PACKAGE_PIN G18 IOSTANDARD LVCMOS33}  [ get_ports "strand_out[1]" ]
+#pmodb[2]
+set_property -dict {PACKAGE_PIN K14 IOSTANDARD LVCMOS33}  [ get_ports "strand_out[2]" ]
+#pmodb[3]
+set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVCMOS33}  [ get_ports "strand_out[3]" ]
 
 # USER GREEN LEDS
 
