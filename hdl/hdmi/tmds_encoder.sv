@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps
-`include "tm_choice.sv"
+`include "hdmi/tm_choice.sv"
 `default_nettype none  // prevents system from inferring an undeclared logic (good practice)
 
 module tmds_encoder (

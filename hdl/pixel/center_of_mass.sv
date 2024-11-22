@@ -1,4 +1,4 @@
-`include "divider.sv"
+`include "math/divider.sv"
 `default_nettype none
 module center_of_mass (
     input wire clk_in,

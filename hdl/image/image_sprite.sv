@@ -1,5 +1,5 @@
 `timescale 1ns / 1ps  // (comment to prevent autoformatting)
-`include "xilinx_single_port_ram_read_first.v"
+`include "mem/xilinx_single_port_ram_read_first.v"
 `default_nettype none
 
 `ifdef SYNTHESIS
