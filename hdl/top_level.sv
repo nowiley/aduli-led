@@ -1,8 +1,8 @@
 `timescale 1ns / 1ps
+`default_nettype none
 `include "driver/led_driver.sv"
 `include "pattern/pat_gradient.sv"
-`include "cam_hdmi_top_lev.sv"
-`default_nettype none
+// `include "cam_hdmi_top_lev.sv"
 
 module top_level #(
     parameter int NUM_LEDS = 2,
@@ -35,57 +35,30 @@ module top_level #(
     output logic        hdmi_clk_p, hdmi_clk_n //differential hdmi clock
 );
 
-    // INSTANCE FROM LAB 5 Cam hdmi stuff
-    /* DEF: 
-     (
-   input wire          clk_100mhz,
-   output logic [15:0] led,
-   // camera bus
-   input wire [7:0]    camera_d, // 8 parallel data wires
-   output logic        cam_xclk, // XC driving camera
-   input wire          cam_hsync, // camera hsync wire
-   input wire          cam_vsync, // camera vsync wire
-   input wire          cam_pclk, // camera pixel clock
-   inout wire          i2c_scl, // i2c inout clock
-   inout wire          i2c_sda, // i2c inout data
-   input wire [15:0]   sw,
-   input wire [3:0]    btn,
-   output logic [2:0]  rgb0,
-   output logic [2:0]  rgb1,
-   // seven segment
-   output logic [3:0]  ss0_an,//anode control for upper four digits of seven-seg display
-   output logic [3:0]  ss1_an,//anode control for lower four digits of seven-seg display
-   output logic [6:0]  ss0_c, //cathode controls for the segments of upper four digits
-   output logic [6:0]  ss1_c, //cathod controls for the segments of lower four digits
-   // hdmi port
-   output logic [2:0]  hdmi_tx_p, //hdmi output signals (positives) (blue, green, red)
-   output logic [2:0]  hdmi_tx_n, //hdmi output signals (negatives) (blue, green, red)
-   output logic        hdmi_clk_p, hdmi_clk_n //differential hdmi clock
-   );
-    */
-    cam_hdmi_top_lev cam_hdmi_mod (
-        .clk_100mhz(clk_100mhz),
-        .led(led),
-        .camera_d(camera_d),
-        .cam_xclk(cam_xclk),
-        .cam_hsync(cam_hsync),
-        .cam_vsync(cam_vsync),
-        .cam_pclk(cam_pclk),
-        .i2c_scl(i2c_scl),
-        .i2c_sda(i2c_sda),
-        .sw(sw),
-        .btn(btn),
-        .rgb0(rgb0),
-        .rgb1(rgb1),
-        .ss0_an(),
-        .ss1_an(),
-        .ss0_c(),
-        .ss1_c(),
-        .hdmi_tx_p(hdmi_tx_p),
-        .hdmi_tx_n(hdmi_tx_n),
-        .hdmi_clk_p(hdmi_clk_p),
-        .hdmi_clk_n(hdmi_clk_n)
-    );
+    // // INSTANCE FROM LAB 5 Cam hdmi stuff
+    // cam_hdmi_top_lev cam_hdmi_mod (
+    //     .clk_100mhz(clk_100mhz),
+    //     .led(led),
+    //     .camera_d(camera_d),
+    //     .cam_xclk(cam_xclk),
+    //     .cam_hsync(cam_hsync),
+    //     .cam_vsync(cam_vsync),
+    //     .cam_pclk(cam_pclk),
+    //     .i2c_scl(i2c_scl),
+    //     .i2c_sda(i2c_sda),
+    //     .sw(sw),
+    //     .btn(btn),
+    //     .rgb0(),
+    //     .rgb1(),
+    //     .ss0_an(),
+    //     .ss1_an(),
+    //     .ss0_c(),
+    //     .ss1_c(),
+    //     .hdmi_tx_p(hdmi_tx_p),
+    //     .hdmi_tx_n(hdmi_tx_n),
+    //     .hdmi_clk_p(hdmi_clk_p),
+    //     .hdmi_clk_n(hdmi_clk_n)
+    // );
 
     // SHUT THEM RGB BOARD LEDS UP
     assign rgb0 = 3'b000;

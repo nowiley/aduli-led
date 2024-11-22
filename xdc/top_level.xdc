@@ -42,19 +42,16 @@ set_property -dict {PACKAGE_PIN C11 IOSTANDARD LVCMOS33} [get_ports "cam_vsync" 
 set_property -dict {PACKAGE_PIN G16 IOSTANDARD LVCMOS33 PULLTYPE PULLUP} [get_ports "i2c_scl" ]
 
 #pmodb[0]
-set_property -dict {PACKAGE_PIN H18 IOSTANDARD LVCMOS33}  [ get_ports "strand[0]" ]
+set_property -dict {PACKAGE_PIN H18 IOSTANDARD LVCMOS33}  [ get_ports "strand_out[0]" ]
 #pmodb[1]
-set_property -dict {PACKAGE_PIN G18 IOSTANDARD LVCMOS33}  [ get_ports "strand[1]" ]
+set_property -dict {PACKAGE_PIN G18 IOSTANDARD LVCMOS33}  [ get_ports "strand_out[1]" ]
 #pmodb[2]
-set_property -dict {PACKAGE_PIN K14 IOSTANDARD LVCMOS33}  [ get_ports "strand[2]" ]
+set_property -dict {PACKAGE_PIN K14 IOSTANDARD LVCMOS33}  [ get_ports "strand_out[2]" ]
 #pmodb[3]
-set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVCMOS33}  [ get_ports "strand[3]" ]
-
- 
+set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVCMOS33}  [ get_ports "strand_out[3]" ]
 
 
 # USER GREEN LEDS
-
 set_property -dict {PACKAGE_PIN C13  IOSTANDARD LVCMOS33} [ get_ports {led[0]} ]
 set_property -dict {PACKAGE_PIN C14  IOSTANDARD LVCMOS33} [ get_ports {led[1]} ]
 set_property -dict {PACKAGE_PIN D14  IOSTANDARD LVCMOS33} [ get_ports {led[2]} ]
@@ -104,33 +101,33 @@ set_property -dict {PACKAGE_PIN B7  IOSTANDARD LVCMOS33} [ get_ports "sw[14]" ]
 set_property -dict {PACKAGE_PIN A8  IOSTANDARD LVCMOS33} [ get_ports "sw[15]" ]
 
 ## USER SEVEN SEGMENT DISPLAY HIGH SIDE DRIVE ACTIVE LOW
-# set_property -dict {PACKAGE_PIN B3  IOSTANDARD LVCMOS33} [ get_ports "ss0_an[0]"]
-# set_property -dict {PACKAGE_PIN C3  IOSTANDARD LVCMOS33} [ get_ports "ss0_an[1]"]
-# set_property -dict {PACKAGE_PIN H6  IOSTANDARD LVCMOS33} [ get_ports "ss0_an[2]"]
-# set_property -dict {PACKAGE_PIN G6  IOSTANDARD LVCMOS33} [ get_ports "ss0_an[3]"]
+set_property -dict {PACKAGE_PIN B3  IOSTANDARD LVCMOS33} [ get_ports "ss0_an[0]"]
+set_property -dict {PACKAGE_PIN C3  IOSTANDARD LVCMOS33} [ get_ports "ss0_an[1]"]
+set_property -dict {PACKAGE_PIN H6  IOSTANDARD LVCMOS33} [ get_ports "ss0_an[2]"]
+set_property -dict {PACKAGE_PIN G6  IOSTANDARD LVCMOS33} [ get_ports "ss0_an[3]"]
 
-# set_property -dict {PACKAGE_PIN H5  IOSTANDARD LVCMOS33} [ get_ports "ss1_an[0]"]
-# set_property -dict {PACKAGE_PIN F5  IOSTANDARD LVCMOS33} [ get_ports "ss1_an[1]"]
-# set_property -dict {PACKAGE_PIN E3  IOSTANDARD LVCMOS33} [ get_ports "ss1_an[2]"]
-# set_property -dict {PACKAGE_PIN E4  IOSTANDARD LVCMOS33} [ get_ports "ss1_an[3]"]
+set_property -dict {PACKAGE_PIN H5  IOSTANDARD LVCMOS33} [ get_ports "ss1_an[0]"]
+set_property -dict {PACKAGE_PIN F5  IOSTANDARD LVCMOS33} [ get_ports "ss1_an[1]"]
+set_property -dict {PACKAGE_PIN E3  IOSTANDARD LVCMOS33} [ get_ports "ss1_an[2]"]
+set_property -dict {PACKAGE_PIN E4  IOSTANDARD LVCMOS33} [ get_ports "ss1_an[3]"]
 
 ## USER SEVEN SEGMENT DISPLAY LOW SIDE DRIVE ACTIVE LOW
-# set_property -dict {PACKAGE_PIN E6  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[0]"]
-# set_property -dict {PACKAGE_PIN B4  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[1]"]
-# set_property -dict {PACKAGE_PIN D5  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[2]"]
-# set_property -dict {PACKAGE_PIN C5  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[3]"]
-# set_property -dict {PACKAGE_PIN D7  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[4]"]
-# set_property -dict {PACKAGE_PIN D6  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[5]"]
-# set_property -dict {PACKAGE_PIN C4  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[6]"]
+set_property -dict {PACKAGE_PIN E6  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[0]"]
+set_property -dict {PACKAGE_PIN B4  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[1]"]
+set_property -dict {PACKAGE_PIN D5  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[2]"]
+set_property -dict {PACKAGE_PIN C5  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[3]"]
+set_property -dict {PACKAGE_PIN D7  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[4]"]
+set_property -dict {PACKAGE_PIN D6  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[5]"]
+set_property -dict {PACKAGE_PIN C4  IOSTANDARD LVCMOS33} [ get_ports "ss0_c[6]"]
 ##set_property -dict {PACKAGE_PIN B5  IOSTANDARD LVCMOS33} [ get_ports "ss0_cdp"]
 #
-# set_property -dict {PACKAGE_PIN F3  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[0]"]
-# set_property -dict {PACKAGE_PIN G5  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[1]"]
-# set_property -dict {PACKAGE_PIN J3  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[2]"]
-# set_property -dict {PACKAGE_PIN H4  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[3]"]
-# set_property -dict {PACKAGE_PIN F4  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[4]"]
-# set_property -dict {PACKAGE_PIN H3  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[5]"]
-# set_property -dict {PACKAGE_PIN E5  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[6]"]
+set_property -dict {PACKAGE_PIN F3  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[0]"]
+set_property -dict {PACKAGE_PIN G5  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[1]"]
+set_property -dict {PACKAGE_PIN J3  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[2]"]
+set_property -dict {PACKAGE_PIN H4  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[3]"]
+set_property -dict {PACKAGE_PIN F4  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[4]"]
+set_property -dict {PACKAGE_PIN H3  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[5]"]
+set_property -dict {PACKAGE_PIN E5  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[6]"]
 ##set_property -dict {PACKAGE_PIN J4  IOSTANDARD LVCMOS33} [ get_ports "ss1_c[7]"]
 
 
