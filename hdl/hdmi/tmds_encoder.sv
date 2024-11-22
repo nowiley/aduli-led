@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
-`default_nettype none // prevents system from inferring an undeclared logic (good practice)
 `include "tm_choice.sv"
+`default_nettype none  // prevents system from inferring an undeclared logic (good practice)
 
 module tmds_encoder (
     input wire clk_in,
