@@ -13,7 +13,7 @@ module top_level (
 assign strand_out[1] = clk_100mhz; // FOR DEBUGGING
 
 // instantiate led_driver module
-led_driver #(.NUM_LEDS(10)) 
+led_driver #(.NUM_LEDS(30)) 
     led_driver_inst (    
     .rst_in(btn[0]),
     .clk_in(clk_100mhz),

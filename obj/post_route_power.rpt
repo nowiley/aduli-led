@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
-| Date             : Sat Nov 16 20:15:43 2024
-| Host             : eecs-digital-07 running 64-bit Ubuntu 24.04.1 LTS
+| Date             : Tue Nov 19 23:04:59 2024
+| Host             : eecs-digital-21 running 64-bit Ubuntu 24.04.1 LTS
 | Command          : report_power -file obj/post_route_power.rpt
 | Design           : top_level
 | Device           : xc7s50csga324-1
@@ -53,12 +53,12 @@ Table of Contents
 | On-Chip        | Power (W) | Used     | Available | Utilization (%) |
 +----------------+-----------+----------+-----------+-----------------+
 | Clocks         |    <0.001 |        3 |       --- |             --- |
-| Slice Logic    |    <0.001 |      140 |       --- |             --- |
-|   LUT as Logic |    <0.001 |       53 |     32600 |            0.16 |
+| Slice Logic    |    <0.001 |      142 |       --- |             --- |
+|   LUT as Logic |    <0.001 |       51 |     32600 |            0.16 |
 |   CARRY4       |    <0.001 |        6 |      8150 |            0.07 |
-|   Register     |    <0.001 |       65 |     65200 |            0.10 |
+|   Register     |    <0.001 |       66 |     65200 |            0.10 |
 |   Others       |     0.000 |        6 |       --- |             --- |
-| Signals        |    <0.001 |      116 |       --- |             --- |
+| Signals        |    <0.001 |      119 |       --- |             --- |
 | I/O            |     0.012 |       39 |       210 |           18.57 |
 | Static Power   |     0.072 |          |           |                 |
 | Total          |     0.085 |          |           |                 |

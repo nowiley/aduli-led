@@ -1,8 +1,8 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.1 (lin64) Build 5076996 Wed May 22 18:36:09 MDT 2024
-| Date         : Sat Nov 16 20:15:34 2024
-| Host         : eecs-digital-07 running 64-bit Ubuntu 24.04.1 LTS
+| Date         : Tue Nov 19 23:04:51 2024
+| Host         : eecs-digital-21 running 64-bit Ubuntu 24.04.1 LTS
 | Command      : report_timing -file obj/post_synth_timing.rpt
 | Design       : top_level
 | Device       : 7s50-csga324
@@ -12,16 +12,16 @@ Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanc
 
 Timing Report
 
-Slack (MET) :             4.856ns  (required time - arrival time)
-  Source:                 led_driver_inst/cyc_counter_module/count_out_reg[2]/C
+Slack (MET) :             4.834ns  (required time - arrival time)
+  Source:                 led_driver_inst/cyc_counter_module/count_out_reg[1]/C
                             (rising edge-triggered cell FDRE clocked by gclk  {rise@0.000ns fall@4.000ns period=10.000ns})
-  Destination:            led_driver_inst/led_counter_module/count_out_reg[0]/R
+  Destination:            led_driver_inst/bit_counter_module/count_out_reg[0]/R
                             (rising edge-triggered cell FDRE clocked by gclk  {rise@0.000ns fall@4.000ns period=10.000ns})
   Path Group:             gclk
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            10.000ns  (gclk rise@10.000ns - gclk rise@0.000ns)
-  Data Path Delay:        4.531ns  (logic 1.123ns (24.785%)  route 3.408ns (75.215%))
-  Logic Levels:           4  (LUT4=1 LUT5=2 LUT6=1)
+  Data Path Delay:        4.553ns  (logic 1.123ns (24.665%)  route 3.430ns (75.335%))
+  Logic Levels:           4  (LUT3=1 LUT4=2 LUT6=1)
   Clock Path Skew:        -0.145ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    2.876ns = ( 12.876 - 10.000 ) 
     Source Clock Delay      (SCD):    3.136ns
@@ -40,20 +40,20 @@ Slack (MET) :             4.856ns  (required time - arrival time)
     N15                  IBUF (Prop_ibuf_I_O)         1.440     1.440 r  clk_100mhz_IBUF_inst/O
                          net (fo=1, unplaced)         0.800     2.240    strand_out_OBUF[1]
                          BUFG (Prop_bufg_I_O)         0.096     2.336 r  strand_out_OBUF_BUFG[1]_inst/O
-                         net (fo=66, unplaced)        0.800     3.136    led_driver_inst/cyc_counter_module/strand_out_OBUF_BUFG[1]
-                         FDRE                                         r  led_driver_inst/cyc_counter_module/count_out_reg[2]/C
+                         net (fo=67, unplaced)        0.800     3.136    led_driver_inst/cyc_counter_module/strand_out_OBUF_BUFG[1]
+                         FDRE                                         r  led_driver_inst/cyc_counter_module/count_out_reg[1]/C
   -------------------------------------------------------------------    -------------------
-                         FDRE (Prop_fdre_C_Q)         0.456     3.592 f  led_driver_inst/cyc_counter_module/count_out_reg[2]/Q
-                         net (fo=4, unplaced)         0.765     4.357    led_driver_inst/cyc_counter_module/cyc_counter[2]
-                         LUT4 (Prop_lut4_I1_O)        0.295     4.652 f  led_driver_inst/cyc_counter_module/next_red[7]_i_4/O
-                         net (fo=2, unplaced)         0.913     5.565    led_driver_inst/cyc_counter_module/next_red[7]_i_4_n_0
-                         LUT5 (Prop_lut5_I2_O)        0.124     5.689 f  led_driver_inst/cyc_counter_module/count_out[3]_i_5/O
-                         net (fo=6, unplaced)         0.481     6.170    led_driver_inst/bit_counter_module/count_out_reg[4]_0
-                         LUT5 (Prop_lut5_I4_O)        0.124     6.294 r  led_driver_inst/bit_counter_module/count_out[3]_i_4/O
-                         net (fo=1, unplaced)         0.449     6.743    led_driver_inst/led_counter_module/count_out_reg[3]_0
-                         LUT6 (Prop_lut6_I5_O)        0.124     6.867 r  led_driver_inst/led_counter_module/count_out[3]_i_1/O
-                         net (fo=4, unplaced)         0.800     7.667    led_driver_inst/led_counter_module/count_out[3]_i_1_n_0
-                         FDRE                                         r  led_driver_inst/led_counter_module/count_out_reg[0]/R
+                         FDRE (Prop_fdre_C_Q)         0.456     3.592 f  led_driver_inst/cyc_counter_module/count_out_reg[1]/Q
+                         net (fo=4, unplaced)         0.765     4.357    led_driver_inst/cyc_counter_module/cyc_counter[1]
+                         LUT4 (Prop_lut4_I1_O)        0.295     4.652 r  led_driver_inst/cyc_counter_module/next_red[7]_i_4/O
+                         net (fo=1, unplaced)         0.902     5.554    led_driver_inst/cyc_counter_module/next_red[7]_i_4_n_0
+                         LUT6 (Prop_lut6_I1_O)        0.124     5.678 r  led_driver_inst/cyc_counter_module/next_red[7]_i_2/O
+                         net (fo=10, unplaced)        0.492     6.170    led_driver_inst/cyc_counter_module/next_red[7]_i_2_n_0
+                         LUT4 (Prop_lut4_I0_O)        0.124     6.294 f  led_driver_inst/cyc_counter_module/count_out[4]_i_6/O
+                         net (fo=3, unplaced)         0.467     6.761    led_driver_inst/cyc_counter_module/state_reg[1]
+                         LUT3 (Prop_lut3_I2_O)        0.124     6.885 r  led_driver_inst/cyc_counter_module/count_out[4]_i_1__0/O
+                         net (fo=5, unplaced)         0.804     7.689    led_driver_inst/bit_counter_module/SR[0]
+                         FDRE                                         r  led_driver_inst/bit_counter_module/count_out_reg[0]/R
   -------------------------------------------------------------------    -------------------
 
                          (clock gclk rise edge)      10.000    10.000 r  
@@ -62,16 +62,16 @@ Slack (MET) :             4.856ns  (required time - arrival time)
     N15                  IBUF (Prop_ibuf_I_O)         1.370    11.370 r  clk_100mhz_IBUF_inst/O
                          net (fo=1, unplaced)         0.760    12.130    strand_out_OBUF[1]
                          BUFG (Prop_bufg_I_O)         0.091    12.221 r  strand_out_OBUF_BUFG[1]_inst/O
-                         net (fo=66, unplaced)        0.655    12.876    led_driver_inst/led_counter_module/strand_out_OBUF_BUFG[1]
-                         FDRE                                         r  led_driver_inst/led_counter_module/count_out_reg[0]/C
+                         net (fo=67, unplaced)        0.655    12.876    led_driver_inst/bit_counter_module/strand_out_OBUF_BUFG[1]
+                         FDRE                                         r  led_driver_inst/bit_counter_module/count_out_reg[0]/C
                          clock pessimism              0.115    12.991    
                          clock uncertainty           -0.035    12.955    
-                         FDRE (Setup_fdre_C_R)       -0.433    12.522    led_driver_inst/led_counter_module/count_out_reg[0]
+                         FDRE (Setup_fdre_C_R)       -0.433    12.522    led_driver_inst/bit_counter_module/count_out_reg[0]
   -------------------------------------------------------------------
                          required time                         12.522    
-                         arrival time                          -7.667    
+                         arrival time                          -7.689    
   -------------------------------------------------------------------
-                         slack                                  4.856    
+                         slack                                  4.834    
 
 
 
