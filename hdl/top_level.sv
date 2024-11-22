@@ -8,11 +8,30 @@ module top_level #(
     parameter int COLOR_WIDTH = 8,
     localparam int CounterWidth = $clog2(NUM_LEDS)
 ) (
+    // SHARED
     input wire clk_100mhz,
-    output logic [15:0] led,  // green leds
     input wire [3:0] btn,  // push buttons
     input wire [15:0] sw,  // switches
+    output logic [15:0] led,  // green leds
+    output logic [2:0]  rgb0,
+    output logic [2:0]  rgb1,
+
+    // LED 
     output logic [3:0] strand_out  // strand output wire PMODA
+
+    // CAMERA BUS
+    input wire [7:0]    camera_d, // 8 parallel data wires
+    output logic        cam_xclk, // XC driving camera
+    input wire          cam_hsync, // camera hsync wire
+    input wire          cam_vsync, // camera vsync wire
+    input wire          cam_pclk, // camera pixel clock
+    inout wire          i2c_scl, // i2c inout clock
+    inout wire          i2c_sda, // i2c inout data
+
+    //HDMI PORT
+    output logic [2:0]  hdmi_tx_p, //hdmi output signals (positives) (blue, green, red)
+    output logic [2:0]  hdmi_tx_n, //hdmi output signals (negatives) (blue, green, red)
+    output logic        hdmi_clk_p, hdmi_clk_n //differential hdmi clock
 );
 
     wire rst_in = btn[0];
