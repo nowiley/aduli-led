@@ -34,8 +34,11 @@ module top_level #(
     output logic        hdmi_clk_p, hdmi_clk_n //differential hdmi clock
 );
 
-    wire rst_in = btn[0];
+    // SHUT THEM RGB BOARD LEDS UP
+    assign rgb0 = 3'b000;
+    assign rgb1 = 3'b000;
 
+    wire rst_in = btn[0];
 
     logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
     logic color_valid;
