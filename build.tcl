@@ -2,7 +2,7 @@
 #set limits (don't change unless you're running local):
 #if running remote, increasing threads will potentially cause your code to submission to get bounced
 #due to a process watchdog.
-set_param general.maxThreads 2
+set_param general.maxThreads 4
 #Define target part and create output directory
 # The Urbana Spartan 7 uses this chip:
 # xc7s50 refers to the fact that it is a Spartan-7-50 FPGA
