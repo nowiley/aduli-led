@@ -647,7 +647,7 @@ module top_level (
         .RAM_WIDTH(24),
         .RAM_DEPTH(256),
         .RAM_PERFORMANCE("HIGH_PERFORMANCE"),
-        .INIT_FILE("camera_orig_720.mem")
+        .INIT_FILE("../../data/camera_orig_720.mem")
     ) registers (
         .addra(bram_addr),  // Address bus, width determined from RAM_DEPTH
         .dina(24'b0),  // RAM input data, width determined from RAM_WIDTH

@@ -2,11 +2,7 @@
 `include "mem/xilinx_single_port_ram_read_first.v"
 `default_nettype none
 
-`ifdef SYNTHESIS
-`define FPATH(X) `"X`"
-`else  /* ! SYNTHESIS */
 `define FPATH(X) `"../../data/X`"
-`endif  /* ! SYNTHESIS */
 
 module image_sprite #(
     parameter WIDTH = 256,
