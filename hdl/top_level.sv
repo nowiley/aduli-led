@@ -1,20 +1,17 @@
 `timescale 1ns / 1ps  // (comment to prevent autoformatting)
 `include "clk/cw_hdmi_clk_wiz.v"
 `include "clk/cw_fast_clk_wiz.v"
-`include "pixel/pixel_reconstruct.sv"
-`include "pixel/rgb_to_ycrcb.sv"
+`include "cam/camera_reader.sv"
 `include "pixel/channel_select.sv"
 `include "pixel/threshold.sv"
 `include "driver/lab05_ssc.sv"
 `include "pixel/center_of_mass.sv"
 `include "hdmi/video_sig_gen.sv"
 `include "pixel/video_mux.sv"
-`include "hdmi/tmds_encoder.sv"
-`include "hdmi/tmds_serializer.sv"
-`include "mem/xilinx_single_port_ram_read_first.v"
-`include "cam/camera_registers.sv"
 `include "image/image_sprite_pop_cat.sv"
 `include "common/synchronizer.sv"
+`include "hdmi/hdmi_driver.sv"
+`include "cam/camera_configurator.sv"
 `default_nettype none
 
 module top_level (
@@ -99,99 +96,10 @@ module top_level (
 
     // ** Handling input from the camera **
 
-    // synchronizers to prevent metastability
-    logic [7:0] camera_d_buf [1:0];
-    logic       cam_hsync_buf[1:0];
-    logic       cam_vsync_buf[1:0];
-    logic       cam_pclk_buf [1:0];
-
-    always_ff @(posedge clk_camera) begin
-        camera_d_buf  <= {camera_d, camera_d_buf[1]};
-        cam_pclk_buf  <= {cam_pclk, cam_pclk_buf[1]};
-        cam_hsync_buf <= {cam_hsync, cam_hsync_buf[1]};
-        cam_vsync_buf <= {cam_vsync, cam_vsync_buf[1]};
-    end
-
-    logic [10:0] camera_hcount;
-    logic [ 9:0] camera_vcount;
-    logic [15:0] camera_pixel;
-    logic        camera_valid;
-
-    // your pixel_reconstruct module, from the exercise!
-    // hook it up to buffered inputs.
-    pixel_reconstruct pixel_reconstruct_m (
-        .clk_in(clk_camera),
-        .rst_in(sys_rst_camera),
-        .camera_pclk_in(cam_pclk_buf[0]),
-        .camera_hs_in(cam_hsync_buf[0]),
-        .camera_vs_in(cam_vsync_buf[0]),
-        .camera_data_in(camera_d_buf[0]),
-        .pixel_valid_out(camera_valid),
-        .pixel_hcount_out(camera_hcount),
-        .pixel_vcount_out(camera_vcount),
-        .pixel_data_out(camera_pixel)
-    );
-
-
-    //two-port BRAM used to hold image from camera.
-    //The camera is producing video at 720p and 30fps, but we can't store all of that
-    //we're going to down-sample by a factor of 4 in both dimensions
-    //so we have 320 by 180.  this is kinda a bummer, but we'll fix it
-    //in future weeks by using off-chip DRAM.
-    //even with the down-sample, because our camera is producing data at 30fps
-    //and  our display is running at 720p at 60 fps, there's no hope to have the
-    //production and consumption of information be synchronized in this system.
-    //even if we could line it up once, the clocks of both systems will drift over time
-    //so to avoid this sync issue, we use a conflict-resolution device...the frame buffer
-    //instead we use a frame buffer as a go-between. The camera sends pixels in at
-    //its own rate, and we pull them out for display at the 720p rate/requirement
-    //this avoids the whole sync issue. It will however result in artifacts when you
-    //introduce fast motion in front of the camera. These lines/tears in the image
-    //are the result of unsynced frame-rewriting happening while displaying. It won't
-    //matter for slow movement
     localparam FB_DEPTH = 320 * 180;
     localparam FB_SIZE = $clog2(FB_DEPTH);
-    logic [FB_SIZE-1:0] addra;  //used to specify address to write to in frame buffer
-
-    logic valid_camera_mem;  //used to enable writing pixel data to frame buffer
-    logic [15:0] camera_mem;  //used to pass pixel data into frame buffer
-
-
-    //TO DO in camera part 1:
-    always_ff @(posedge clk_camera) begin
-        //create logic to handle wriiting of camera.
-        //we want to down sample the data from the camera by a factor of four in both
-        //the x and y dimensions! TO DO
-
-        //downsample by 4 in x and y
-        if (camera_hcount % 4 == 0 && camera_vcount % 4 == 0) begin
-            addra <= (camera_hcount >> 2) + 320 * (camera_vcount >> 2);
-            valid_camera_mem <= 1;
-            camera_mem <= camera_pixel;
-        end else begin
-            valid_camera_mem <= 0;
-        end
-    end
-
-    //frame buffer from IP
-    blk_mem_gen_0 frame_buffer (
-        .addra(addra),  //pixels are stored using this math
-        .clka(clk_camera),
-        .wea(valid_camera_mem),
-        .dina(camera_mem),
-        .ena(1'b1),
-        .douta(),  //never read from this side
-        .addrb(addrb),  //transformed lookup pixel
-        .dinb(16'b0),
-        .clkb(clk_pixel),
-        .web(1'b0),
-        .enb(1'b1),
-        .doutb(frame_buff_raw)
-    );
-    logic [15:0] frame_buff_raw;  //data out of frame buffer (565)
     logic [FB_SIZE-1:0] addrb;  //used to lookup address in memory for reading from buffer
     logic good_addrb;  //used to indicate within valid frame for scaling
-
 
     //TO DO in camera part 1:
     // Scale pixel coordinates from HDMI to the frame buffer to grab the right pixel
@@ -211,34 +119,6 @@ module top_level (
         good_addrb <= (hcount_hdmi < (320 << out_shift)) && (vcount_hdmi < (180 << out_shift));
     end
 
-    //split fame_buff into 3 8 bit color channels (5:6:5 adjusted accordingly)
-    //remapped frame_buffer outputs with 8 bits for r, g, b
-    logic [7:0] fb_red, fb_green, fb_blue;
-    always_ff @(posedge clk_pixel) begin
-        fb_red   <= good_addrb ? {frame_buff_raw[15:11], 3'b0} : 8'b0;
-        fb_green <= good_addrb ? {frame_buff_raw[10:5], 2'b0} : 8'b0;
-        fb_blue  <= good_addrb ? {frame_buff_raw[4:0], 3'b0} : 8'b0;
-    end
-    // Pixel Processing pre-HDMI output
-
-    // RGB to YCrCb
-
-    //output of rgb to ycrcb conversion (10 bits due to module):
-    logic [9:0] y_full, cr_full, cb_full;  //ycrcb conversion of full pixel
-    //bottom 8 of y, cr, cb conversions:
-    logic [7:0] y, cr, cb;  //ycrcb conversion of full pixel
-    //Convert RGB of full pixel to YCrCb
-    //See lecture 07 for YCrCb discussion.
-    //Module has a 3 cycle latency
-    rgb_to_ycrcb rgbtoycrcb_m (
-        .clk_in(clk_pixel),
-        .r_in  (fb_red),
-        .g_in  (fb_green),
-        .b_in  (fb_blue),
-        .y_out (y_full),
-        .cr_out(cr_full),
-        .cb_out(cb_full)
-    );
 
     //channel select module (select which of six color channels to mask):
     logic [2:0] channel_sel;
@@ -255,23 +135,27 @@ module top_level (
     logic [9:0] y_com, y_com_calc;  //long term y_com and output from module, resp
     logic new_com;  //used to know when to update x_com and y_com ...
 
-    //take lower 8 of full outputs.
-    // treat cr and cb as signed numbers, invert the MSB to get an unsigned equivalent ( [-128,128) maps to [0,256) )
-    assign y = y_full[7:0];
-    assign cr = {!cr_full[7], cr_full[6:0]};
-    assign cb = {!cb_full[7], cb_full[6:0]};
-
     assign channel_sel = sw[3:1];
 
-    logic [7:0] fb_red_ps1, fb_green_ps1, fb_blue_ps1;
-    synchronizer #(
-        .DEPTH(3),
-        .WIDTH(3 * 8)
-    ) sync_fb_ps1 (
-        .clk_in  (clk_pixel),
-        .rst_in  (sys_rst_pixel),
-        .data_in ({fb_red, fb_green, fb_blue}),
-        .data_out({fb_red_ps1, fb_green_ps1, fb_blue_ps1})
+    logic [7:0] fb_red, fb_green, fb_blue;
+    logic [7:0] y, cr, cb;  //ycrcb conversion of full pixel
+    camera_reader cam_m (
+        .clk_camera(clk_camera),
+        .clk_pixel(clk_pixel),
+        .sys_rst_camera(sys_rst_camera),
+        .sys_rst_pixel(sys_rst_pixel),
+        .camera_d(camera_d),
+        .cam_pclk(cam_pclk),
+        .cam_hsync(cam_hsync),
+        .cam_vsync(cam_vsync),
+        .addrb(addrb),
+        .good_addrb(good_addrb),
+        .red(fb_red),
+        .green(fb_green),
+        .blue(fb_blue),
+        .y(y),
+        .cr(cr),
+        .cb(cb)
     );
 
     // * 3'b000: green
@@ -286,9 +170,9 @@ module top_level (
     // chooses one of them to output as an 8 bit value
     channel_select mcs (
         .sel_in(channel_sel),
-        .r_in(fb_red_ps1),  //DONE: needs to use pipelined signal (PS1)
-        .g_in(fb_green_ps1),  //DONE: needs to use pipelined signal (PS1)
-        .b_in(fb_blue_ps1),  //DONE: needs to use pipelined signal (PS1)
+        .r_in(fb_red),
+        .g_in(fb_green),
+        .b_in(fb_blue),
         .y_in(y),
         .cr_in(cr),
         .cb_in(cb),
@@ -452,7 +336,7 @@ module top_level (
 
     logic [7:0] fb_red_ps2, fb_green_ps2, fb_blue_ps2;
     synchronizer #(
-        .DEPTH(4),
+        .DEPTH(1),
         .WIDTH(3 * 8)
     ) sync_fb_ps2 (
         .clk_in  (clk_pixel),
@@ -508,7 +392,7 @@ module top_level (
     video_mux mvm (
         .bg_in(display_choice),  //choose background
         .target_in(target_choice),  //choose target
-        .camera_pixel_in({fb_red, fb_green, fb_blue}),  //DONE: needs (PS2)
+        .camera_pixel_in({fb_red_ps2, fb_green_ps2, fb_blue_ps2}),  //DONE: needs (PS2)
         .camera_y_in(y_ps6),  //luminance DONE: needs (PS6)
         .channel_in(selected_channel_ps5),  //current channel being drawn DONE: needs (PS5)
         .thresholded_pixel_in(mask),  //one bit mask signal DONE: needs (PS4) - NOT USED
@@ -519,96 +403,21 @@ module top_level (
         .pixel_out({red, green, blue})  //output to tmds
     );
 
-    // HDMI Output: just like before!
-
-    logic [9:0] tmds_10b   [0:2];  //output of each TMDS encoder!
-    logic       tmds_signal[2:0];  //output of each TMDS serializer!
-
-    //three tmds_encoders (blue, green, red)
-    //note green should have no control signal like red
-    //the blue channel DOES carry the two sync signals:
-    //  * control_in[0] = horizontal sync signal
-    //  * control_in[1] = vertical sync signal
-
-    tmds_encoder tmds_red (
-        .clk_in(clk_pixel),
-        .rst_in(sys_rst_pixel),
-        .data_in(red),
-        .control_in(2'b0),
-        .ve_in(active_draw_hdmi_ps3),
-        .tmds_out(tmds_10b[2])
+    hdmi_driver hdmi_out (
+        .clk_pixel(clk_pixel),
+        .clk_5x(clk_5x),
+        .sys_rst_pixel(sys_rst_pixel),
+        .red(red),
+        .green(green),
+        .blue(blue),
+        .vsync_hdmi(vsync_hdmi_ps3),
+        .hsync_hdmi(hsync_hdmi_ps3),
+        .active_draw_hdmi(active_draw_hdmi_ps3),
+        .hdmi_tx_p(hdmi_tx_p),
+        .hdmi_tx_n(hdmi_tx_n),
+        .hdmi_clk_p(hdmi_clk_p),
+        .hdmi_clk_n(hdmi_clk_n)
     );
-
-    tmds_encoder tmds_green (
-        .clk_in(clk_pixel),
-        .rst_in(sys_rst_pixel),
-        .data_in(green),
-        .control_in(2'b0),
-        .ve_in(active_draw_hdmi_ps3),
-        .tmds_out(tmds_10b[1])
-    );
-
-    tmds_encoder tmds_blue (
-        .clk_in(clk_pixel),
-        .rst_in(sys_rst_pixel),
-        .data_in(blue),
-        .control_in({vsync_hdmi_ps3, hsync_hdmi_ps3}),
-        .ve_in(active_draw_hdmi_ps3),
-        .tmds_out(tmds_10b[0])
-    );
-
-
-    //three tmds_serializers (blue, green, red):
-    //MISSING: two more serializers for the green and blue tmds signals.
-    tmds_serializer red_ser (
-        .clk_pixel_in(clk_pixel),
-        .clk_5x_in(clk_5x),
-        .rst_in(sys_rst_pixel),
-        .tmds_in(tmds_10b[2]),
-        .tmds_out(tmds_signal[2])
-    );
-    tmds_serializer green_ser (
-        .clk_pixel_in(clk_pixel),
-        .clk_5x_in(clk_5x),
-        .rst_in(sys_rst_pixel),
-        .tmds_in(tmds_10b[1]),
-        .tmds_out(tmds_signal[1])
-    );
-    tmds_serializer blue_ser (
-        .clk_pixel_in(clk_pixel),
-        .clk_5x_in(clk_5x),
-        .rst_in(sys_rst_pixel),
-        .tmds_in(tmds_10b[0]),
-        .tmds_out(tmds_signal[0])
-    );
-
-    //output buffers generating differential signals:
-    //three for the r,g,b signals and one that is at the pixel clock rate
-    //the HDMI receivers use recover logic coupled with the control signals asserted
-    //during blanking and sync periods to synchronize their faster bit clocks off
-    //of the slower pixel clock (so they can recover a clock of about 742.5 MHz from
-    //the slower 74.25 MHz clock)
-    OBUFDS OBUFDS_blue (
-        .I (tmds_signal[0]),
-        .O (hdmi_tx_p[0]),
-        .OB(hdmi_tx_n[0])
-    );
-    OBUFDS OBUFDS_green (
-        .I (tmds_signal[1]),
-        .O (hdmi_tx_p[1]),
-        .OB(hdmi_tx_n[1])
-    );
-    OBUFDS OBUFDS_red (
-        .I (tmds_signal[2]),
-        .O (hdmi_tx_p[2]),
-        .OB(hdmi_tx_n[2])
-    );
-    OBUFDS OBUFDS_clock (
-        .I (clk_pixel),
-        .O (hdmi_clk_p),
-        .OB(hdmi_clk_n)
-    );
-
 
     // Nothing To Touch Down Here:
     // register writes to the camera
@@ -639,67 +448,18 @@ module top_level (
         end
     end
 
-    logic [23:0] bram_dout;
-    logic [ 7:0] bram_addr;
-
-    // ROM holding pre-built camera settings to send
-    xilinx_single_port_ram_read_first #(
-        .RAM_WIDTH(24),
-        .RAM_DEPTH(256),
-        .RAM_PERFORMANCE("HIGH_PERFORMANCE"),
-        .INIT_FILE("../../data/camera_orig_720.mem")
-    ) registers (
-        .addra(bram_addr),  // Address bus, width determined from RAM_DEPTH
-        .dina(24'b0),  // RAM input data, width determined from RAM_WIDTH
-        .clka(clk_camera),  // Clock
-        .wea(1'b0),  // Write enable
-        .ena(1'b1),  // RAM Enable, for additional power savings, disable port when not in use
-        .rsta(sys_rst_camera),  // Output reset (does not affect memory contents)
-        .regcea(1'b1),  // Output register enable
-        .douta(bram_dout)  // RAM output data, width determined from RAM_WIDTH
-    );
-
-    logic [23:0] registers_dout;
-    logic [ 7:0] registers_addr;
-    assign registers_dout = bram_dout;
-    assign bram_addr = registers_addr;
-
-    logic con_scl_i, con_scl_o, con_scl_t;
-    logic con_sda_i, con_sda_o, con_sda_t;
-
-    // NOTE these also have pullup specified in the xdc file!
-    // access our inouts properly as tri-state pins
-    IOBUF IOBUF_scl (
-        .I (con_scl_o),
-        .IO(i2c_scl),
-        .O (con_scl_i),
-        .T (con_scl_t)
-    );
-    IOBUF IOBUF_sda (
-        .I (con_sda_o),
-        .IO(i2c_sda),
-        .O (con_sda_i),
-        .T (con_sda_t)
-    );
-
-    // provided module to send data BRAM -> I2C
-    camera_registers crw (
-        .clk_in(clk_camera),
-        .rst_in(sys_rst_camera),
-        .init_valid(cr_init_valid),
-        .init_ready(cr_init_ready),
-        .scl_i(con_scl_i),
-        .scl_o(con_scl_o),
-        .scl_t(con_scl_t),
-        .sda_i(con_sda_i),
-        .sda_o(con_sda_o),
-        .sda_t(con_sda_t),
-        .bram_dout(registers_dout),
-        .bram_addr(registers_addr)
+    camera_configurator cam_conf (
+        .clk_camera(clk_camera),
+        .sys_rst_camera(sys_rst_camera),
+        .cr_init_valid(cr_init_valid),
+        .cr_init_ready(cr_init_ready),
+        .bus_active(bus_active),
+        .i2c_scl(i2c_scl),
+        .i2c_sda(i2c_sda)
     );
 
     // a handful of debug signals for writing to registers
-    assign led[0] = crw.bus_active;
+    assign led[0] = bus_active;
     assign led[1] = cr_init_valid;
     assign led[2] = cr_init_ready;
     assign led[15:3] = 0;
