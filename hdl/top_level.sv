@@ -2,12 +2,13 @@
 `default_nettype none
 `include "driver/led_driver.sv"
 `include "pattern/pat_gradient.sv"
+`include "driver/moving_pix.sv"
 // `include "cam_hdmi_top_lev.sv"
 
 module top_level #(
-    parameter int NUM_LEDS = 2,
+    parameter int NUM_LEDS = 10,
     parameter int COLOR_WIDTH = 8,
-    localparam int CounterWidth = $clog2(NUM_LEDS)
+    localparam int COUNTER_WIDTH = $clog2(NUM_LEDS)
 ) (
     // SHARED
     input wire clk_100mhz,
@@ -27,12 +28,12 @@ module top_level #(
     input wire          cam_vsync, // camera vsync wire
     input wire          cam_pclk, // camera pixel clock
     inout wire          i2c_scl, // i2c inout clock
-    inout wire          i2c_sda, // i2c inout data
+    inout wire          i2c_sda // i2c inout data
 
     //HDMI PORT
-    output logic [2:0]  hdmi_tx_p, //hdmi output signals (positives) (blue, green, red)
-    output logic [2:0]  hdmi_tx_n, //hdmi output signals (negatives) (blue, green, red)
-    output logic        hdmi_clk_p, hdmi_clk_n //differential hdmi clock
+    // output logic [2:0]  hdmi_tx_p, //hdmi output signals (positives) (blue, green, red)
+    // output logic [2:0]  hdmi_tx_n, //hdmi output signals (negatives) (blue, green, red)
+    // output logic        hdmi_clk_p, hdmi_clk_n //differential hdmi clock
 );
 
     // // INSTANCE FROM LAB 5 Cam hdmi stuff
@@ -69,20 +70,36 @@ module top_level #(
 
     logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
     logic color_valid;
-    logic [CounterWidth-1:0] next_led_request;
+    logic [COUNTER_WIDTH-1:0] next_led_request;
 
-    // instantiate pattern modules
-    pat_gradient #(
+    // // instantiate pattern modules
+    // pat_gradient #(
+    //     .NUM_LEDS(NUM_LEDS),
+    //     .COLOR_WIDTH(COLOR_WIDTH)
+    // ) pat_gradient_inst (
+    //     .rst_in(rst_in),
+    //     .clk_in(clk_100mhz),
+    //     .next_led_request(next_led_request),
+    //     .red_out(next_red),
+    //     .green_out(next_green),
+    //     .blue_out(next_blue),
+    //     .color_valid(color_valid)
+    // );
+
+    // instantiate moving_pix module
+    moving_pix #(
         .NUM_LEDS(NUM_LEDS),
-        .COLOR_WIDTH(COLOR_WIDTH)
-    ) pat_gradient_inst (
+        .COLOR_WIDTH(COLOR_WIDTH),
+        .FRAMES_PER_LED(200)
+    ) moving_pix_inst (
         .rst_in(rst_in),
         .clk_in(clk_100mhz),
         .next_led_request(next_led_request),
-        .red_out(next_red),
+        .request_valid(1),
         .green_out(next_green),
+        .red_out(next_red),
         .blue_out(next_blue),
-        .color_valid(color_valid)
+        .color_ready(color_valid)
     );
 
     // instantiate led_driver module
@@ -96,7 +113,7 @@ module top_level #(
         .green_in(next_green),
         .red_in(next_red),
         .blue_in(next_blue),
-        .color_valid(color_valid),
+        .color_valid(1),
         .strand_out(strand_out[0]),
         .next_led_request(next_led_request)
     );

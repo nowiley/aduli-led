@@ -66,7 +66,7 @@ module moving_pix #(
                 color_ready <= 1;
             end else begin
                 green_out <= 8'h00;
-                red_out <= 8'h00;
+                red_out <= 8'h0A;
                 blue_out <= 8'h00;
                 color_ready <= 1;
             end

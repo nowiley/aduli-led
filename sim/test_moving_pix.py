@@ -33,9 +33,10 @@ async def test_a(dut):
         for frame in range(NUM_FRAMES_PER_LED):
             for request in range(NUM_LEDS):
                 # Iterate through the strand
-                await FallingEdge(dut.clk_in)
+                await RisingEdge(dut.clk_in)
                 dut.next_led_request.value = request
                 await FallingEdge(dut.clk_in)
+                await ClockCycles(dut.clk_in, 120)
                 dut._log.info(f"Checking pixel {pix} frame {frame}")
                 dut._log.info(f"g: {dut.green_out.value}, r: {dut.red_out.value}, b: {dut.blue_out.value}")
                 if pix == request:
