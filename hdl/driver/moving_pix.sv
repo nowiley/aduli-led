@@ -28,37 +28,38 @@ module moving_pix #(
     logic [LED_COUNTER_WIDTH-1:0] current_pixel_idx;
     logic [LED_COUNTER_WIDTH-1:0] last_pixel_request;
     logic [FRAME_COUNTER_WIDTH-1:0] num_strand_frames;
-    logic pixel_enters_frame;
-
-    evt_counter #(
-        .MAX_COUNT(FRAMES_PER_LED)
-    ) frame_counter_module (
-        .clk_in(clk_in),
-        .rst_in(rst_in),
-        .evt_in(pixel_enters_frame),
-        .count_out(num_strand_frames)
-    );
+    logic cur_pix_displayed;
+    assign cur_pix_displayed = ((last_pixel_request != next_led_request) && (last_pixel_request == current_pixel_idx));
+    logic displayed_prev_led;
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             // Reset all states
             current_pixel_idx <= 0;
             last_pixel_request <= next_led_request;
+            num_strand_frames <= 0;
             green_out <= 8'h00;
             red_out <= 8'h00;
             blue_out <= 8'h00;
             color_ready <= 0;
+            displayed_prev_led <= 0;
         end else begin
             // Update num_strand_frames too keep track of how many frames we display current_pixel_idx
-            pixel_enters_frame <= ((last_pixel_request != next_led_request) && (next_led_request == current_pixel_idx));
             last_pixel_request <= next_led_request;
-            // Increment current pixel index to display
-            if (num_strand_frames == FRAMES_PER_LED - 1) begin
-                current_pixel_idx <= current_pixel_idx == NUM_LEDS - 1 ? 0 : current_pixel_idx + 1;
+            if (cur_pix_displayed) begin
+                if (num_strand_frames == FRAMES_PER_LED - 1) begin
+                    // Increment current pixel index to display
+                    current_pixel_idx <= (current_pixel_idx == NUM_LEDS - 1) ? 0 : current_pixel_idx + 1;
+                    displayed_prev_led <= 1;
+                end else begin
+                    displayed_prev_led <= 0;
+                end
+                // handle looping and skipping next led on last frame of current led
+                num_strand_frames <= (displayed_prev_led) ? 0 :  (num_strand_frames == FRAMES_PER_LED - 1) ? 0 : num_strand_frames + 1;
             end
 
             // Respond to requests
-            if (next_led_request == current_pixel_idx) begin
+            if (next_led_request == current_pixel_idx && !displayed_prev_led) begin
                 green_out <= GREEN_VAL;
                 red_out <= RED_VAL;
                 blue_out <= BLUE_VAL;
@@ -67,7 +68,7 @@ module moving_pix #(
                 green_out <= 8'h00;
                 red_out <= 8'h00;
                 blue_out <= 8'h00;
-                color_ready <= 0;
+                color_ready <= 1;
             end
         end
     end
