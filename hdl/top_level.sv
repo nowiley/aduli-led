@@ -17,7 +17,7 @@
 `default_nettype none
 
 module top_level #(
-    parameter int NUM_LEDS = 2,
+    parameter int NUM_LEDS = 10,
     parameter int COLOR_WIDTH = 8,
     localparam int CounterWidth = $clog2(NUM_LEDS)
 ) (
