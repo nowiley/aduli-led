@@ -1,4 +1,6 @@
 `timescale 1ns / 1ps  // (comment to prevent autoformatting)
+`include "driver/led_driver.sv"
+`include "pattern/pat_gradient.sv"
 `include "clk/cw_hdmi_clk_wiz.v"
 `include "clk/cw_fast_clk_wiz.v"
 `include "cam/camera_reader.sv"
@@ -14,7 +16,11 @@
 `include "cam/camera_configurator.sv"
 `default_nettype none
 
-module top_level (
+module top_level #(
+    parameter int NUM_LEDS = 2,
+    parameter int COLOR_WIDTH = 8,
+    localparam int CounterWidth = $clog2(NUM_LEDS)
+) (
     input  wire         clk_100mhz,
     output logic [15:0] led,
     // camera bus
@@ -38,8 +44,44 @@ module top_level (
     output logic [ 2:0] hdmi_tx_p,   //hdmi output signals (positives) (blue, green, red)
     output logic [ 2:0] hdmi_tx_n,   //hdmi output signals (negatives) (blue, green, red)
     output logic        hdmi_clk_p,
-    hdmi_clk_n  //differential hdmi clock
+    hdmi_clk_n,  //differential hdmi clock
+    output logic [ 3:0] strand_out   // strand output wire PMODA
 );
+
+    logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
+    logic color_valid;
+    logic [CounterWidth-1:0] next_led_request;
+
+    // instantiate pattern modules
+    pat_gradient #(
+        .NUM_LEDS(NUM_LEDS),
+        .COLOR_WIDTH(COLOR_WIDTH)
+    ) pat_gradient_inst (
+        .rst_in(sys_rst_led),
+        .clk_in(clk_100_passthrough),
+        .next_led_request(next_led_request),
+        .red_out(next_red),
+        .green_out(next_green),
+        .blue_out(next_blue),
+        .color_valid(color_valid)
+    );
+
+    // instantiate led_driver module
+    led_driver #(
+        .NUM_LEDS(NUM_LEDS),
+        .COLOR_WIDTH(COLOR_WIDTH)
+    ) led_driver_inst (
+        .rst_in(sys_rst_led),
+        .clk_in(clk_100_passthrough),
+        .force_reset(btn[1]),
+        .green_in(next_green),
+        .red_in(next_red),
+        .blue_in(next_blue),
+        .color_valid(color_valid),
+        .strand_out(strand_out[0]),
+        .next_led_request(next_led_request)
+    );
+
 
     // shut up those RGBs
     assign rgb0 = 0;
@@ -48,6 +90,7 @@ module top_level (
     // Clock and Reset Signals
     logic sys_rst_camera;
     logic sys_rst_pixel;
+    logic sys_rst_led;
 
     logic clk_camera;
     logic clk_pixel;
@@ -79,6 +122,7 @@ module top_level (
 
     assign sys_rst_camera = btn[0];  //use for resetting camera side of logic
     assign sys_rst_pixel = btn[0];  //use for resetting hdmi/draw side of logic
+    assign sys_rst_led = btn[0];  //use for resetting led side of logic
 
 
     // video signal generator signals
