@@ -6,7 +6,7 @@
 module moving_pix #(
     parameter int CLOCK_SPEED = 100_000_000,  // 100MHz
     parameter int NUM_LEDS = 20, // !!! ASSUMES STRAND DRIVER HAS MORE LEDS (next_led_request >= NUM_LEDS)
-    parameter int FRAMES_PER_LED = 10,
+    parameter int FRAMES_PER_LED = 100,
     parameter int COLOR_WIDTH = 8,
     parameter int GREEN_VAL = 8'hFF,
     parameter int RED_VAL = 8'hFF,
