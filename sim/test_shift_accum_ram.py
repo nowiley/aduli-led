@@ -85,7 +85,7 @@ def is_runner():
     sim = os.getenv("SIM", "icarus")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
-    sources = [proj_path / "hdl" / "mem" / "accum_ram.sv"]
+    sources = [proj_path / "hdl" / "mem" / "shift_accum_ram.sv"]
     build_test_args = ["-Wall"]
     parameters = {
         "WIDTH": WIDTH,
@@ -95,7 +95,7 @@ def is_runner():
     runner = get_runner(sim)
     runner.build(
         sources=sources,
-        hdl_toplevel="accum_ram",
+        hdl_toplevel="shift_accum_ram",
         includes=[proj_path / "hdl"],
         always=True,
         build_args=build_test_args,
@@ -105,8 +105,8 @@ def is_runner():
     )
     run_test_args = []
     runner.test(
-        hdl_toplevel="accum_ram",
-        test_module="test_accum_ram",
+        hdl_toplevel="shift_accum_ram",
+        test_module="test_shift_accum_ram",
         test_args=run_test_args,
         waves=True,
     )

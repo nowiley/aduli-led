@@ -2,7 +2,7 @@
 `include "mem/xilinx_true_dual_port_read_first_1_clock_ram.v"
 `include "common/synchronizer.sv"
 `default_nettype none
-module accum_ram #(
+module shift_accum_ram #(
     parameter WIDTH,
     parameter DEPTH
 ) (
