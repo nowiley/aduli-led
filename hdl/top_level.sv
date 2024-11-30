@@ -1,4 +1,6 @@
 `timescale 1ns / 1ps  // (comment to prevent autoformatting)
+`include "driver/led_driver.sv"
+`include "pattern/pat_gradient.sv"
 `include "clk/cw_hdmi_clk_wiz.v"
 `include "clk/cw_fast_clk_wiz.v"
 `include "cam/camera_reader.sv"
@@ -14,7 +16,11 @@
 `include "cam/camera_configurator.sv"
 `default_nettype none
 
-module top_level (
+module top_level #(
+    parameter int NUM_LEDS = 10,
+    parameter int COLOR_WIDTH = 8,
+    localparam int CounterWidth = $clog2(NUM_LEDS)
+) (
     input  wire         clk_100mhz,
     output logic [15:0] led,
     // camera bus
@@ -38,8 +44,44 @@ module top_level (
     output logic [ 2:0] hdmi_tx_p,   //hdmi output signals (positives) (blue, green, red)
     output logic [ 2:0] hdmi_tx_n,   //hdmi output signals (negatives) (blue, green, red)
     output logic        hdmi_clk_p,
-    hdmi_clk_n  //differential hdmi clock
+    hdmi_clk_n,  //differential hdmi clock
+    output logic [ 3:0] strand_out   // strand output wire PMODA
 );
+
+    logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
+    logic color_valid;
+    logic [CounterWidth-1:0] next_led_request;
+
+    // instantiate pattern modules
+    pat_gradient #(
+        .NUM_LEDS(NUM_LEDS),
+        .COLOR_WIDTH(COLOR_WIDTH)
+    ) pat_gradient_inst (
+        .rst_in(sys_rst_led),
+        .clk_in(clk_100_passthrough),
+        .next_led_request(next_led_request),
+        .red_out(next_red),
+        .green_out(next_green),
+        .blue_out(next_blue),
+        .color_valid(color_valid)
+    );
+
+    // instantiate led_driver module
+    led_driver #(
+        .NUM_LEDS(NUM_LEDS),
+        .COLOR_WIDTH(COLOR_WIDTH)
+    ) led_driver_inst (
+        .rst_in(sys_rst_led),
+        .clk_in(clk_100_passthrough),
+        .force_reset(btn[1]),
+        .green_in(next_green),
+        .red_in(next_red),
+        .blue_in(next_blue),
+        .color_valid(color_valid),
+        .strand_out(strand_out[0]),
+        .next_led_request(next_led_request)
+    );
+
 
     // shut up those RGBs
     assign rgb0 = 0;
@@ -48,6 +90,7 @@ module top_level (
     // Clock and Reset Signals
     logic sys_rst_camera;
     logic sys_rst_pixel;
+    logic sys_rst_led;
 
     logic clk_camera;
     logic clk_pixel;
@@ -79,6 +122,7 @@ module top_level (
 
     assign sys_rst_camera = btn[0];  //use for resetting camera side of logic
     assign sys_rst_pixel = btn[0];  //use for resetting hdmi/draw side of logic
+    assign sys_rst_led = btn[0];  //use for resetting led side of logic
 
 
     // video signal generator signals
@@ -107,10 +151,8 @@ module top_level (
     always_ff @(posedge clk_pixel) begin
         int out_shift;
         //use structure below to do scaling
-        if (btn[1]) begin  //1X scaling from frame buffer
+        if (btn[3]) begin  //1X scaling from frame buffer
             out_shift = 0;
-        end else if (!sw[0]) begin  //2X scaling from frame buffer
-            out_shift = 1;
         end else begin  //4X scaling from frame buffer
             out_shift = 2;
         end
@@ -121,7 +163,6 @@ module top_level (
 
 
     //channel select module (select which of six color channels to mask):
-    logic [2:0] channel_sel;
     logic [7:0] selected_channel;  //selected channels
     //selected_channel could contain any of the six color channels depend on selection
 
@@ -134,8 +175,6 @@ module top_level (
     logic [10:0] x_com, x_com_calc;  //long term x_com and output from module, resp
     logic [9:0] y_com, y_com_calc;  //long term y_com and output from module, resp
     logic new_com;  //used to know when to update x_com and y_com ...
-
-    assign channel_sel = sw[3:1];
 
     logic [7:0] fb_red, fb_green, fb_blue;
     logic [7:0] y, cr, cb;  //ycrcb conversion of full pixel
@@ -169,7 +208,7 @@ module top_level (
     //Channel Select: Takes in the full RGB and YCrCb information and
     // chooses one of them to output as an 8 bit value
     channel_select mcs (
-        .sel_in(channel_sel),
+        .sel_in(3'b001),
         .r_in(fb_red),
         .g_in(fb_green),
         .b_in(fb_blue),
@@ -182,6 +221,7 @@ module top_level (
     //threshold values used to determine what value  passes:
     assign lower_threshold = {sw[11:8], 4'b0};
     assign upper_threshold = {sw[15:12], 4'b0};
+    wire [7:0] exposure = {sw[7:1], 1'b0};
 
     //Thresholder: Takes in the full selected channedl and
     //based on upper and lower bounds provides a binary mask bit
@@ -202,13 +242,13 @@ module top_level (
     // thresholds and selected channel
     // special customized version
     lab05_ssc mssc (
-        .clk_in(clk_pixel),
-        .rst_in(sys_rst_pixel),
-        .lt_in(lower_threshold),
-        .ut_in(upper_threshold),
-        .channel_sel_in(channel_sel),
+        .clk_in (clk_pixel),
+        .rst_in (sys_rst_pixel),
+        .lt_in  (lower_threshold),
+        .ut_in  (upper_threshold),
+        .val3_in(exposure),
         .cat_out(ss_c),
-        .an_out({ss0_an, ss1_an})
+        .an_out ({ss0_an, ss1_an})
     );
     assign ss0_c = ss_c;  //control upper four digit's cathodes!
     assign ss1_c = ss_c;  //same as above but for lower four digits!
@@ -316,11 +356,8 @@ module top_level (
 
     // Video Mux: select from the different display modes based on switch values
     //used with switches for display selections
-    logic [1:0] display_choice;
-    logic [1:0] target_choice;
-
-    assign display_choice = sw[5:4];
-    assign target_choice  = sw[7:6];
+    wire [1:0] display_choice = {sw[0], 1'b0};
+    wire [1:0] target_choice = 2'b00;
 
     //choose what to display from the camera:
     // * 'b00:  normal camera out
@@ -455,7 +492,9 @@ module top_level (
         .cr_init_ready(cr_init_ready),
         .bus_active(bus_active),
         .i2c_scl(i2c_scl),
-        .i2c_sda(i2c_sda)
+        .i2c_sda(i2c_sda),
+        .exposure(exposure),
+        .ready_update_in(btn[1])
     );
 
     // a handful of debug signals for writing to registers

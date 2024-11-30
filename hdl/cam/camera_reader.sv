@@ -93,13 +93,9 @@ module camera_reader #(
         //the x and y dimensions! TO DO
 
         //downsample by 4 in x and y
-        if (camera_hcount % 4 == 0 && camera_vcount % 4 == 0) begin
-            addra <= (camera_hcount >> 2) + 320 * (camera_vcount >> 2);
-            valid_camera_mem <= 1;
-            camera_mem <= camera_pixel;
-        end else begin
-            valid_camera_mem <= 0;
-        end
+        addra <= camera_hcount + 320 * camera_vcount;
+        valid_camera_mem <= 1;
+        camera_mem <= camera_pixel;
     end
 
     //frame buffer from IP
