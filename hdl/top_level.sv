@@ -120,7 +120,7 @@ module top_level #(
     // this port also is specifically set to high drive by the XDC file.
     assign cam_xclk = clk_xc;
 
-    assign sys_rst_camera = btn[0];  //use for resetting camera side of logic
+    assign sys_rst_camera = btn[0] || btn[2];  //use for resetting camera side of logic
     assign sys_rst_pixel = btn[0];  //use for resetting hdmi/draw side of logic
     assign sys_rst_led = btn[0];  //use for resetting led side of logic
 
