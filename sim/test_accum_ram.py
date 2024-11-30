@@ -9,7 +9,7 @@ from cocotb.clock import Clock
 from cocotb.runner import get_runner
 from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge
 
-WIDTH = 4
+WIDTH = 10
 
 
 async def setup(dut):
@@ -36,10 +36,11 @@ async def test_a(dut):
 
     sum_total = 0
     addr = 1
+    # summands = [0, 1, 0, 0, 1, 1, 0, 1]
+    summand_str = 0b10110010
+    summands = [int(bit) for bit in f"{summand_str:08b}"]
 
-    for i in range(4):
-        summand = 0x1
-
+    for summand in summands:
         dut.addr_in.value = addr
         dut.summand_in.value = summand
 
@@ -52,9 +53,9 @@ async def test_a(dut):
         await FallingEdge(dut.clk_in)
 
         assert dut.result_valid_out.value == 1, "Result valid should be high"
-        await ClockCycles(
-            dut.clk_in, i
-        )  # wait some extra time because results should stay there
+        # await ClockCycles(
+        #     dut.clk_in, 1
+        # )  # wait some extra time because results should stay there
         assert (
             dut.summand_out.value == summand
         ), f"Summand should be {summand} but is {dut.summand_out.value}"
@@ -64,13 +65,16 @@ async def test_a(dut):
         assert (
             dut.read_out.value == sum_total
         ), f"Read should be {sum_total} but is {dut.read_out.value}"
-        sum_total += summand
+        sum_total <<= 1
+        sum_total += summand & 1
         sum_total %= 2**WIDTH
         assert (
             dut.sum_out.value == sum_total
         ), f"Sum should be {sum_total} but is {dut.sum_out.value}"
 
         await ClockCycles(dut.clk_in, 3)
+
+    assert sum_total == summand_str, f"Sum should be {summand_str} but is {sum_total}"
 
     await ClockCycles(dut.clk_in, 20)
 

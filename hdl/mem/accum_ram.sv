@@ -9,10 +9,10 @@ module accum_ram #(
     input wire clk_in,
     input wire rst_in,
     input wire [$clog2(DEPTH)-1:0] addr_in,
-    input wire [WIDTH-1:0] summand_in,
+    input wire summand_in,
     input wire request_valid_in,
     output logic [WIDTH-1:0] read_out,
-    output logic [WIDTH-1:0] summand_out,
+    output logic summand_out,
     output logic [WIDTH-1:0] sum_out,
     output logic [$clog2(DEPTH)-1:0] addr_out,
     output logic result_valid_out
@@ -28,7 +28,7 @@ module accum_ram #(
         .data_out(addr_out)
     );
     synchronizer #(
-        .WIDTH(WIDTH),
+        .WIDTH(1),
         .DEPTH(2)
     ) summand_sync (
         .clk_in  (clk_in),
@@ -46,7 +46,7 @@ module accum_ram #(
         .data_out(result_valid_out)
     );
 
-    assign sum_out = summand_sync.data_out + read_out;
+    assign sum_out = (read_out << 1) | summand_sync.data_out;
 
     xilinx_true_dual_port_read_first_1_clock_ram #(
         .RAM_WIDTH(WIDTH),
