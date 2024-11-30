@@ -151,7 +151,7 @@ module top_level #(
     always_ff @(posedge clk_pixel) begin
         int out_shift;
         //use structure below to do scaling
-        if (btn[1]) begin  //1X scaling from frame buffer
+        if (btn[3]) begin  //1X scaling from frame buffer
             out_shift = 0;
         end else begin  //4X scaling from frame buffer
             out_shift = 2;
@@ -221,7 +221,7 @@ module top_level #(
     //threshold values used to determine what value  passes:
     assign lower_threshold = {sw[11:8], 4'b0};
     assign upper_threshold = {sw[15:12], 4'b0};
-    wire [7:0] exposure = {1'b0, sw[7:1]};
+    wire [7:0] exposure = {sw[7:1], 1'b0};
 
     //Thresholder: Takes in the full selected channedl and
     //based on upper and lower bounds provides a binary mask bit
@@ -494,7 +494,7 @@ module top_level #(
         .i2c_scl(i2c_scl),
         .i2c_sda(i2c_sda),
         .exposure(exposure),
-        .ready_update_in(btn[3])
+        .ready_update_in(btn[1])
     );
 
     // a handful of debug signals for writing to registers
