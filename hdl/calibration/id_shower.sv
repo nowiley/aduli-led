@@ -13,7 +13,7 @@
 // 4. Displays ID of current calibration frame buffer on leds id[10:0] -> g [10:7] r [6:3] b [2:0]
 // ADDRESS WITDH MUST BE LESS THAN # CYCLES FOR LED
 // 3 CYCLE DELAY FROM WHEN NEXT LED_REQUEST IS MADE
-module calib_frame_display
+module id_shower
 # (
     parameter int NUM_LEDS = 50,
     parameter int LED_ADDRESS_WIDTH = 6
@@ -23,9 +23,9 @@ module calib_frame_display
     input wire [3:0] btn,
     input wire [15:0] sw,
     input [LED_ADDRESS_WIDTH:0] next_led_request,
-    output [7:0] green_out,
-    output [7:0] red_out,
-    output [7:0] blue_out,
+    output logic [7:0] green_out,
+    output logic [7:0] red_out,
+    output logic [7:0] blue_out,
     output logic color_valid,
     output logic displayed_frame_valid
 );
@@ -34,7 +34,7 @@ module calib_frame_display
     logic [LED_ADDRESS_WIDTH-1:0] current_shift_amount;
 
     logic processing_request;
-    logic can_display_pixel = (address_bit_counter == current_shift_amount);
+    logic can_display_pixel;
     logic [LED_ADDRESS_WIDTH-1:0] prev_request;
     logic [LED_ADDRESS_WIDTH-1:0] temp_request_to_process;
 
@@ -45,7 +45,7 @@ module calib_frame_display
     } display_state;
 
     assign can_display_pixel = (address_bit_counter == current_shift_amount) && (btn == 1);
-    assign displayed_valid_frame = (display_state == VALID_DISPLAY);
+    assign displayed_frame_valid = (display_state == VALID_DISPLAY);
 
     always_ff @(posedge clk) begin
         if (rst) begin // assuming rst is tied to button 0
@@ -53,8 +53,8 @@ module calib_frame_display
             green_out <= 0;
             red_out <= 0;
             blue_out <= 0;
-            displayed_frame_valid <= 0;
             processing_request <= 0;
+            color_valid <= 0;
         end else begin
             // General behavior taking in request, processing, and outputting
             if (processing_request) begin
@@ -97,6 +97,7 @@ module calib_frame_display
                 prev_request <= next_led_request;
                 processing_request <= 1;
                 current_shift_amount <= 0;
+                color_valid <= 0;
             end
 
             // Handle Button Pushes
