@@ -25,6 +25,8 @@ async def test_a(dut):
     await ClockCycles(dut.clk, 3)
     await FallingEdge(dut.clk)
     dut.rst.value = 0
+    dut.increment_bit.value = 0
+    dut.decrement_bit.value = 0
 
     # Start Driving
     for frame in range(NUM_FRAMES):
@@ -34,7 +36,7 @@ async def test_a(dut):
 
             if pix == 2 and frame == 3:
                 dut._log.info("Pressing Button 1")
-                dut.btn = 0b0010
+                dut.increment_bit.value = 1
             await ClockCycles(dut.clk, 1)
 
             # assert dut.color_valid.value == 0, "ColorValid should be 0 when recieving a new pixel request"

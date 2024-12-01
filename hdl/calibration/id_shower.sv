@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps  // (comment to prevent autoformatting)
 `include "mem/xilinx_single_port_ram_read_first.v"
-`include "cam/camera_registers.sv"
+`include "common/debouncer.sv"
 `default_nettype none
 
 // Module to debug calibration, four user interactions
@@ -20,7 +20,8 @@ module id_shower
 )(
     input wire clk,
     input wire rst,
-    input wire [3:0] btn,
+    input wire increment_bit,
+    input wire decrement_bit,
     input wire [15:0] sw,
     input [LED_ADDRESS_WIDTH:0] next_led_request,
     output logic [7:0] green_out,
@@ -29,14 +30,12 @@ module id_shower
     output logic color_valid,
     output logic displayed_frame_valid
 );
-    localparam ADDRESS_BIT_COUNTER_WIDTH = $clog2($clog2(NUM_LEDS));
-    logic [ADDRESS_BIT_COUNTER_WIDTH-1:0] address_bit_counter; // hold what bit lsb part of ids are showing
-    logic [LED_ADDRESS_WIDTH-1:0] current_shift_amount;
+    localparam ADDRESS_BIT_NUMER_WIDTH = $clog2($clog2(NUM_LEDS));
+    logic [ADDRESS_BIT_NUMER_WIDTH-1:0] address_bit_num; // hold what bit lsb part of ids are showing
 
-    logic processing_request;
-    logic can_display_pixel;
     logic [LED_ADDRESS_WIDTH-1:0] prev_request;
-    logic [LED_ADDRESS_WIDTH-1:0] temp_request_to_process;
+    logic prev_increment_bit;
+    logic prev_decrement_bit;
 
     enum logic [1:0] {
         SEEN_ZERO_ZERO_REQUESTS,
@@ -44,70 +43,70 @@ module id_shower
         VALID_DISPLAY  
     } display_state;
 
-    assign can_display_pixel = (address_bit_counter == current_shift_amount) && (btn == 1);
     assign displayed_frame_valid = (display_state == VALID_DISPLAY);
+    logic flag;
 
     always_ff @(posedge clk) begin
         if (rst) begin // assuming rst is tied to button 0
-            address_bit_counter <= 0;
             green_out <= 0;
             red_out <= 0;
             blue_out <= 0;
-            processing_request <= 0;
             color_valid <= 0;
-        end else begin
-            // General behavior taking in request, processing, and outputting
-            if (processing_request) begin
-                if (can_display_pixel) begin
-                    // HANDLE COLOR OUTPUT
-                    case (temp_request_to_process[0])
-                        0: begin
-                            green_out <= 0;
-                            red_out <= 8'hFF;
-                            blue_out <= 0;
-                        end
-                        1: begin
-                            green_out <= 0;
-                            red_out <= 0;
-                            blue_out <= 8'hFF;
-                        end
-                        default: begin // SHOULD NEVER GO HERE
-                            green_out <= 8'hFF;
-                            red_out <= 0;
-                            blue_out <= 0;
-                        end
-                    endcase
-                    // HANDLE DISPLAY STATE
-                    case (display_state && prev_request == 0)
-                        SEEN_ZERO_ZERO_REQUESTS: display_state <= SEEN_ONE_ZERO_REQUESTS;
-                        SEEN_ONE_ZERO_REQUESTS: display_state <= VALID_DISPLAY;
-                        default: display_state <= SEEN_ZERO_ZERO_REQUESTS;
-                    endcase
-                    color_valid <= 1;
-                    processing_request <= 0;
-                end else begin
-                    color_valid <= 0;
-                    processing_request <= 1;
-                    temp_request_to_process <= temp_request_to_process >> 1;
-                    current_shift_amount <= current_shift_amount + 1;
-                end
-            end else if (next_led_request != prev_request) begin
-                // accept new request
-                temp_request_to_process <= next_led_request;
-                prev_request <= next_led_request;
-                processing_request <= 1;
-                current_shift_amount <= 0;
-                color_valid <= 0;
-            end
-
-            // Handle Button Pushes
-            if (btn[1]) begin
-                address_bit_counter <= address_bit_counter + 1;
-                display_state <= SEEN_ONE_ZERO_REQUESTS;
-            end else if (btn[2]) begin
-                address_bit_counter <= address_bit_counter - 1;
+            address_bit_num <= 0;
+            prev_request <= 0;
+            prev_increment_bit <= increment_bit;
+            prev_decrement_bit <= decrement_bit;
+            display_state <= SEEN_ZERO_ZERO_REQUESTS;
+        // HANDLE INCREMENT AND DECREMENT
+        end else if ((increment_bit && !prev_increment_bit) || (decrement_bit && ! prev_decrement_bit)) begin
+            prev_increment_bit <= increment_bit;
+            prev_decrement_bit <= decrement_bit;
+            flag <= 1;
+            if (increment_bit && !prev_increment_bit) begin
+                address_bit_num <= address_bit_num + 1;
                 display_state <= SEEN_ZERO_ZERO_REQUESTS;
-            end 
+            end else if (decrement_bit && ! prev_decrement_bit) begin
+                address_bit_num <= address_bit_num - 1;
+                display_state <= SEEN_ZERO_ZERO_REQUESTS;
+            end
+        // HANDLE GENERAL CASE
+        end else begin
+            // DISPLAY CURRENT BIT OF REQUEST ADDRESS
+            case (next_led_request[address_bit_num])
+            0: begin
+                green_out <= 0;
+                red_out <= 8'hFF;
+                blue_out <= 0;
+                color_valid <= 1;
+            end
+            1: begin
+                green_out <= 0;
+                red_out <= 0;
+                blue_out <= 8'hFF;
+                color_valid <= 1;
+            end
+            default: begin // SHOULD NEVER GO HERE
+                green_out <= 8'hFF;
+                red_out <= 0;
+                blue_out <= 0;
+                color_valid <= 1;
+            end
+            endcase
+
+            prev_request <= next_led_request;
+            prev_increment_bit <= increment_bit;
+            prev_decrement_bit <= decrement_bit;
+            // accept new requests
+            if (next_led_request != prev_request) begin
+                if (prev_request == 0) begin
+                case (display_state)
+                    SEEN_ZERO_ZERO_REQUESTS: display_state <= SEEN_ONE_ZERO_REQUESTS;
+                    SEEN_ONE_ZERO_REQUESTS: display_state <= VALID_DISPLAY;
+                    VALID_DISPLAY: display_state <= VALID_DISPLAY;
+                    default: display_state <= SEEN_ZERO_ZERO_REQUESTS;
+                endcase
+                end
+            end
         end
     end
 
