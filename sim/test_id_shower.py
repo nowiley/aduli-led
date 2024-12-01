@@ -34,7 +34,7 @@ async def test_a(dut):
         for pix in range(NUM_LEDS):
             dut.next_led_request.value = pix
 
-            if pix == 2 and frame == 3:
+            if pix == 2 and frame == 2:
                 dut._log.info("Pressing Button 1")
                 dut.increment_bit.value = 1
             await ClockCycles(dut.clk, 1)
@@ -42,6 +42,19 @@ async def test_a(dut):
             # assert dut.color_valid.value == 0, "ColorValid should be 0 when recieving a new pixel request"
             await ClockCycles(dut.clk, 10)
             dut._log.info(f"Pixel# {pix}, GreenOut: {hex(dut.green_out.value)}, RedOut: {hex(dut.red_out.value)}, BlueOut: {hex(dut.blue_out.value)}, ColorValid: {dut.color_valid.value}, DisplayedFrameValid: {dut.displayed_frame_valid.value}")
+            if frame > 7:
+                #these frames should be showing bit 1, if bit 1 = 0 then red only if bit 1 = 1 then blue only
+                pix_bin_rep = bin(pix)[2:]
+                while len(pix_bin_rep) < 8:
+                    pix_bin_rep = "0" + pix_bin_rep
+                print("L:KAJFL:IYHQOINFL:KJ", pix_bin_rep)
+                if pix_bin_rep[-2] == "0":
+                    assert dut.red_out.value == 0xFF, "RedOut should be 1 when bit 1 is 0"
+                    assert dut.blue_out.value == 0x0, "BlueOut should be 0 when bit 1 is 0"
+                else:
+                    assert dut.red_out.value == 0x00, "RedOut should be 0 when bit 1 is 1"
+                    assert dut.blue_out.value == 0xFF, "BlueOut should be 1 when bit 1 is 1"
+                assert dut.displayed_frame_valid.value == 1, "DisplayedFrameValid should be 1 after 8 frames"
 
 def is_runner():
     """Moving pixel tester"""
