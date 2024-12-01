@@ -163,13 +163,15 @@ module top_level #(
 
 
     //channel select module (select which of six color channels to mask):
-    logic [7:0] selected_channel;  //selected channels
+    logic [2:0] channel_sel;
+    logic [7:0] selected_channel;  //FIXME: unused - selected channels
     //selected_channel could contain any of the six color channels depend on selection
 
     //threshold module (apply masking threshold):
     logic [7:0] lower_threshold;
     logic [7:0] upper_threshold;
-    logic mask;  //Whether or not thresholded pixel is 1 or 0
+    logic detect0;  //Whether or not thresholded pixel is detected as bit 0
+    logic detect1;  //Whether or not thresholded pixel is detected as bit 1
 
     //Center of Mass variables (tally all mask=1 pixels for a frame and calculate their center of mass)
     logic [10:0] x_com, x_com_calc;  //long term x_com and output from module, resp
@@ -207,16 +209,16 @@ module top_level #(
     // * 3'b111: not valid
     //Channel Select: Takes in the full RGB and YCrCb information and
     // chooses one of them to output as an 8 bit value
-    channel_select mcs (
-        .sel_in(3'b001),
-        .r_in(fb_red),
-        .g_in(fb_green),
-        .b_in(fb_blue),
-        .y_in(y),
-        .cr_in(cr),
-        .cb_in(cb),
-        .channel_out(selected_channel)
-    );
+    // channel_select mcs (
+    //     .sel_in(3'b001),
+    //     .r_in(fb_red),
+    //     .g_in(fb_green),
+    //     .b_in(fb_blue),
+    //     .y_in(y),
+    //     .cr_in(cr),
+    //     .cb_in(cb),
+    //     .channel_out(selected_channel)
+    // );
 
     //threshold values used to determine what value  passes:
     assign lower_threshold = {sw[11:8], 4'b0};
@@ -227,13 +229,21 @@ module top_level #(
     //based on upper and lower bounds provides a binary mask bit
     // * 1 if selected channel is within the bounds (inclusive)
     // * 0 if selected channel is not within the bounds
-    threshold mt (
+    threshold mt_blue (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
-        .pixel_in(selected_channel),
+        .pixel_in(fb_blue),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
-        .mask_out(mask)  //single bit if pixel within mask.
+        .mask_out(detect0)  //single bit if pixel within mask.
+    );
+    threshold mt_red (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .pixel_in(fb_red),
+        .lower_bound_in(lower_threshold),
+        .upper_bound_in(upper_threshold),
+        .mask_out(detect1)  //single bit if pixel within mask.
     );
 
 
@@ -286,7 +296,7 @@ module top_level #(
         .rst_in(sys_rst_pixel),
         .x_in(hcount_hdmi_ps3),  //DONE: needs to use pipelined signal! (PS3)
         .y_in(vcount_hdmi_ps3),  //DONE: needs to use pipelined signal! (PS3)
-        .valid_in(mask),  //aka threshold
+        .valid_in(detect1),  //aka threshold
         .tabulate_in((nf_hdmi_ps3)),
         .x_out(x_com_calc),
         .y_out(y_com_calc),
@@ -432,7 +442,9 @@ module top_level #(
         .camera_pixel_in({fb_red_ps2, fb_green_ps2, fb_blue_ps2}),  //DONE: needs (PS2)
         .camera_y_in(y_ps6),  //luminance DONE: needs (PS6)
         .channel_in(selected_channel_ps5),  //current channel being drawn DONE: needs (PS5)
-        .thresholded_pixel_in(mask),  //one bit mask signal DONE: needs (PS4) - NOT USED
+        .thresholded_pixel_in({
+            detect1, detect0
+        }),  //one bit mask signal DONE: needs (PS4) - NOT USED
         .crosshair_in({ch_red_ps8, ch_green_ps8, ch_blue_ps8}),  //DONE: needs (PS8)
         .com_sprite_pixel_in({
             img_red_ps9, img_green_ps9, img_blue_ps9

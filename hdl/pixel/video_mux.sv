@@ -7,7 +7,7 @@ module video_mux (
     input wire [23:0] camera_pixel_in,  //16 bits from camera 5:6:5
     input wire [7:0] camera_y_in,  //y channel of ycrcb camera conversion
     input wire [7:0] channel_in,  //the channel from selection module
-    input wire thresholded_pixel_in,  //
+    input wire [1:0] thresholded_pixel_in,  //
     input wire [23:0] com_sprite_pixel_in,
     input wire crosshair_in,
     output logic [23:0] pixel_out
@@ -31,7 +31,8 @@ module video_mux (
         case (bg_in)
             2'b00: l_1 = camera_pixel_in;
             2'b01: l_1 = {channel_in, channel_in, channel_in};
-            2'b10: l_1 = (thresholded_pixel_in != 0) ? 24'hFFFFFF : 24'h000000;
+            2'b10:
+            l_1 = ((thresholded_pixel_in & 2'b10 != 0) ? 24'hFF0000 : 24'h000000) | ((thresholded_pixel_in & 2'b01 != 0) ? 24'h0000FF : 24'h000000);
             2'b11:
             l_1 = (thresholded_pixel_in != 0) ? 24'hFF77AA : {camera_y_in,camera_y_in,camera_y_in};
         endcase
