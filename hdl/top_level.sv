@@ -222,7 +222,7 @@ module top_level #(
 
     //threshold values used to determine what value  passes:
     assign lower_threshold = {sw[11:8], 4'b0};
-    assign upper_threshold = {sw[15:12], 4'b0};
+    assign upper_threshold = {sw[15:12], 4'hF};
     wire [7:0] exposure = {sw[7:1], 1'b0};
 
     //Thresholder: Takes in the full selected channedl and
