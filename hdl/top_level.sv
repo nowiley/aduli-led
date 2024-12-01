@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps  // (comment to prevent autoformatting)
 `include "driver/led_driver.sv"
 `include "pattern/pat_gradient.sv"
+`include "pattern/moving_pix.sv"
 `include "clk/cw_hdmi_clk_wiz.v"
 `include "clk/cw_fast_clk_wiz.v"
 `include "cam/camera_reader.sv"
@@ -17,10 +18,11 @@
 `default_nettype none
 
 module top_level #(
-    parameter int NUM_LEDS = 10,
+    parameter int NUM_LEDS = 50,
     parameter int COLOR_WIDTH = 8,
     localparam int CounterWidth = $clog2(NUM_LEDS)
 ) (
+    
     input  wire         clk_100mhz,
     output logic [15:0] led,
     // camera bus
@@ -53,17 +55,31 @@ module top_level #(
     logic [CounterWidth-1:0] next_led_request;
 
     // instantiate pattern modules
-    pat_gradient #(
+    // pat_gradient #(
+    //     .NUM_LEDS(NUM_LEDS),
+    //     .COLOR_WIDTH(COLOR_WIDTH)
+    // ) pat_gradient_inst (
+    //     .rst_in(sys_rst_led),
+    //     .clk_in(clk_100_passthrough),
+    //     .next_led_request(next_led_request),
+    //     .red_out(next_red),
+    //     .green_out(next_green),
+    //     .blue_out(next_blue),
+    //     .color_valid(color_valid)
+    // );
+    // instantiate moving_pix module
+    moving_pix #(
         .NUM_LEDS(NUM_LEDS),
         .COLOR_WIDTH(COLOR_WIDTH)
     ) pat_gradient_inst (
         .rst_in(sys_rst_led),
         .clk_in(clk_100_passthrough),
         .next_led_request(next_led_request),
-        .red_out(next_red),
+        .request_valid(1),
         .green_out(next_green),
+        .red_out(next_red),
         .blue_out(next_blue),
-        .color_valid(color_valid)
+        .color_ready(color_valid)
     );
 
     // instantiate led_driver module
