@@ -23,7 +23,7 @@ module id_shower
     input wire increment_bit,
     input wire decrement_bit,
     input wire [15:0] sw,
-    input [LED_ADDRESS_WIDTH:0] next_led_request,
+    input wire [LED_ADDRESS_WIDTH:0] next_led_request,
     output logic [7:0] green_out,
     output logic [7:0] red_out,
     output logic [7:0] blue_out,

@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps  // (comment to prevent autoformatting)
 `include "driver/led_driver.sv"
 `include "pattern/pat_gradient.sv"
+`include "calibration/id_shower.sv"
 `include "clk/cw_hdmi_clk_wiz.v"
 `include "clk/cw_fast_clk_wiz.v"
 `include "cam/camera_reader.sv"
@@ -17,7 +18,7 @@
 `default_nettype none
 
 module top_level #(
-    parameter int NUM_LEDS = 10,
+    parameter int NUM_LEDS = 30,
     parameter int COLOR_WIDTH = 8,
     localparam int CounterWidth = $clog2(NUM_LEDS)
 ) (
@@ -51,20 +52,61 @@ module top_level #(
     logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
     logic color_valid;
     logic [CounterWidth-1:0] next_led_request;
+    logic clean_btn1;
+    logic clean_btn2;
+
+    // debouncer for button 1
+    debouncer #(
+        .CLK_PERIOD_NS(10),
+        .DEBOUNCE_TIME_MS(5)
+    ) debouncer_btn1 (
+        .clk_in(clk_100_passthrough),
+        .rst_in(btn[0]),
+        .dirty_in(btn[1]),
+        .clean_out(clean_btn1)
+    );
+    debouncer #(
+        .CLK_PERIOD_NS(10),
+        .DEBOUNCE_TIME_MS(5)
+    ) debouncer_btn2 (
+        .clk_in(clk_100_passthrough),
+        .rst_in(btn[0]),
+        .dirty_in(btn[2]),
+        .clean_out(clean_btn2)
+    );
+
+    //instantiate id shower module
+    id_shower #(
+        .NUM_LEDS(NUM_LEDS),
+        .LED_ADDRESS_WIDTH(CounterWidth)
+    ) id_shower_inst (
+        .clk(clk_100_passthrough),
+        .rst(btn[0]),
+        .increment_bit(clean_btn1),
+        .decrement_bit(clean_btn2),
+        .sw(sw),
+        .next_led_request(next_led_request),
+        .green_out(next_green),
+        .red_out(next_red),
+        .blue_out(next_blue),
+        .color_valid(color_valid),
+        .displayed_frame_valid()
+    );
 
     // instantiate pattern modules
-    pat_gradient #(
-        .NUM_LEDS(NUM_LEDS),
-        .COLOR_WIDTH(COLOR_WIDTH)
-    ) pat_gradient_inst (
-        .rst_in(sys_rst_led),
-        .clk_in(clk_100_passthrough),
-        .next_led_request(next_led_request),
-        .red_out(next_red),
-        .green_out(next_green),
-        .blue_out(next_blue),
-        .color_valid(color_valid)
-    );
+    // pat_gradient #(
+    //     .NUM_LEDS(NUM_LEDS),
+    //     .COLOR_WIDTH(COLOR_WIDTH)
+    // ) pat_gradient_inst (
+    //     .rst_in(sys_rst_led),
+    //     .clk_in(clk_100_passthrough),
+    //     .next_led_request(next_led_request),
+    //     .red_out(next_red),
+    //     .green_out(next_green),
+    //     .blue_out(next_blue),
+    //     .color_valid(color_valid)
+    // );
+
 
     // instantiate led_driver module
     led_driver #(
