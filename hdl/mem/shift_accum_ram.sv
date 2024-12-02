@@ -16,7 +16,7 @@ module shift_accum_ram #(
     input wire rst_in,
     input wire [$clog2(DEPTH)-1:0] addr_in,
     input wire summand_in,
-    input accum_request_t request_type_in,
+    input wire accum_request_t request_type_in,
     input wire request_valid_in,
     output logic [WIDTH-1:0] read_out,
     output logic summand_out,
