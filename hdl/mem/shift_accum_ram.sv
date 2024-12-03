@@ -2,6 +2,12 @@
 `include "mem/xilinx_true_dual_port_read_first_1_clock_ram.v"
 `include "common/synchronizer.sv"
 `default_nettype none
+
+typedef enum logic {
+    READ  = 0,
+    WRITE = 1
+} accum_request_t;
+
 module shift_accum_ram #(
     parameter WIDTH,
     parameter DEPTH
@@ -10,11 +16,13 @@ module shift_accum_ram #(
     input wire rst_in,
     input wire [$clog2(DEPTH)-1:0] addr_in,
     input wire summand_in,
+    input wire accum_request_t request_type_in,
     input wire request_valid_in,
     output logic [WIDTH-1:0] read_out,
     output logic summand_out,
     output logic [WIDTH-1:0] sum_out,
     output logic [$clog2(DEPTH)-1:0] addr_out,
+    output accum_request_t request_type_out,
     output logic result_valid_out
 );
 
@@ -35,6 +43,15 @@ module shift_accum_ram #(
         .rst_in  (rst_in),
         .data_in (summand_in),
         .data_out(summand_out)
+    );
+    synchronizer #(
+        .WIDTH($bits(accum_request_t)),
+        .DEPTH(2)
+    ) request_type_sync (
+        .clk_in  (clk_in),
+        .rst_in  (rst_in),
+        .data_in (request_type_in),
+        .data_out(request_type_out)
     );
     synchronizer #(
         .WIDTH(1),
@@ -63,7 +80,7 @@ module shift_accum_ram #(
         .addrb(addr_sync.data_out),  // Port B address bus,
         // .doutb(),  // Port B RAM output data,
         .dinb(sum_out),  // Port B RAM input data, width determined from RAM_WIDTH
-        .web(result_valid_out),  // Port B write enable
+        .web(result_valid_out && request_type_out),  // Port B write enable
         .ena(1'b1),  // Port A RAM Enable
         .enb(1'b1),  // Port B RAM Enable,
         .rsta(rst_in),  // Port A output reset

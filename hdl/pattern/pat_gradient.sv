@@ -17,6 +17,7 @@ module pat_gradient #(
     logic request_valid;
     logic [CounterWidth-1:0] current_led;
     assign color_valid = request_valid && (current_led == next_led_request);
+    wire led_parity = next_led_request[0];
 
 
     always_ff @(posedge clk_in) begin
@@ -26,9 +27,9 @@ module pat_gradient #(
             blue_out <= 0;
             request_valid <= 0;
         end else begin
-            red_out <= (1 << COLOR_WIDTH) - 1 - (next_led_request << 4);
+            red_out <= led_parity ? (1 << COLOR_WIDTH) - 1 : 0;
             green_out <= 0;
-            blue_out <= (next_led_request << 4);
+            blue_out <= led_parity ? 0 : (1 << COLOR_WIDTH) - 1;
             current_led <= next_led_request;
             request_valid <= 1;
         end
