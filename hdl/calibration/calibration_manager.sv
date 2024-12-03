@@ -3,10 +3,10 @@
 `include "calibration/id_shower.sv"
 `default_nettype none
 
-module cal_fsm 
+module calibration_manager 
 #(
     parameter int NUM_LEDS = 50,
-    parameter int LED_ADDRESS_WIDTH = 6,
+    parameter int LED_ADDRESS_WIDTH = 10,
     parameter int NUM_FRAME_BUFFER_PIXELS = 360 * 180,
     localparam int CAL_TABLE_COUNTER_WIDTH = $clog2(NUM_FRAME_BUFFER_PIXELS)
 )(
@@ -24,15 +24,15 @@ module cal_fsm
         output logic [7:0] blue_out,
         output logic color_valid,
         // FRAME DISPLAYED FLAG
-        output logic displayed_frame_valid
-    // FRAME BUFFER VALUE and HCOUNT VCOUNT IN
+        output logic displayed_frame_valid,
+    // FRAME BUFFER VALUE and ADDRESS INPUTS
         input wire [CAL_TABLE_COUNTER_WIDTH-1:0] frame_buffer_in_address,
         input wire frame_buffer_data,
         input wire new_frame_address,
     // CALIBRATION TABLE I/O
         // FOR READ REQUESTS FROM HDMI
         input wire [CAL_TABLE_COUNTER_WIDTH-1:0] cal_table_read_request_address,
-        output logic [LED_ADDRESS_WIDTH:0] cal_table_read_data
+        output logic [LED_ADDRESS_WIDTH:0] cal_table_read_data //DELAYED BY 2 CYCLES
 );
 
 logic [CAL_TABLE_COUNTER_WIDTH-1:0] internal_read_request_address;
@@ -56,6 +56,7 @@ xilinx_true_dual_port_read_first_2_clock_ram
     // EXTERNAL READ to read calibration table
     .addrb(cal_table_read_request_address), // external read address
     .doutb(cal_table_read_data) // external read data
+    .web(1'b0), // write enable B SHOULD BE 0
     .ena(1'b1), // enable ram A
     .enb(1'b1) // enable ram B
     .rsta(rst), // reset ram A
