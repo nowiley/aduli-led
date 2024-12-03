@@ -25,13 +25,13 @@ module cal_fsm
         output logic color_valid,
         // FRAME DISPLAYED FLAG
         output logic displayed_frame_valid
+    // FRAME BUFFER VALUE and HCOUNT VCOUNT IN
+        input wire [CAL_TABLE_COUNTER_WIDTH-1:0] frame_buffer_in_address,
+        input wire frame_buffer_data,
     // CALIBRATION TABLE I/O
         // FOR READ REQUESTS FROM HDMI
         input wire [CAL_TABLE_COUNTER_WIDTH-1:0] cal_table_read_request_address,
         output logic [LED_ADDRESS_WIDTH:0] cal_table_read_data
-    // READ REQUESTS TO FRAME BUFFER
-        output logic [CAL_TABLE_COUNTER_WIDTH-1:0] frame_buffer_read_request_address,
-        input wire [15:0] frame_buffer_data
 );
 
 logic [CAL_TABLE_COUNTER_WIDTH-1:0] internal_read_request_address;
@@ -62,6 +62,8 @@ xilinx_true_dual_port_read_first_2_clock_ram
     .regcea(1'b1), // register enable A
     .regceb(1'b1) // register enable B
 );
+
+
 
 
 
