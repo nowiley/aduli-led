@@ -64,6 +64,24 @@ xilinx_true_dual_port_read_first_2_clock_ram
 );
 
 
+// Instantiate the ID Shower module
+id_shower #(
+    .NUM_LEDS(NUM_LEDS),
+    .LED_ADDRESS_WIDTH(LED_ADDRESS_WIDTH)
+) id_shower_inst (
+    .clk(clk),
+    .rst(rst),
+    .increment_bit(increment_id),
+    .next_led_request(next_led_request),
+    .green_out(green_out),
+    .red_out(red_out),
+    .blue_out(blue_out),
+    .color_valid(color_valid),
+    .displayed_frame_valid(displayed_frame_valid)
+);
+
+
+
 
 
 
