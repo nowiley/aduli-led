@@ -28,7 +28,7 @@ module calibration_manager
     // FRAME BUFFER VALUE and ADDRESS INPUTS
         input wire [CAL_TABLE_COUNTER_WIDTH-1:0] frame_buffer_in_address,
         input wire frame_buffer_data,
-        input wire new_frame_address,
+        input wire use_this_frame_address_and_data,
     // CALIBRATION TABLE I/O
         // FOR READ REQUESTS FROM HDMI
         input wire [CAL_TABLE_COUNTER_WIDTH-1:0] cal_table_read_request_address,
@@ -87,7 +87,7 @@ id_shower #(
 // LOGIC TO PROCESS FRAME BUFFER DATA INTO CALIBRATION TABLE
 // 1. Put address from frame buffer directly into calibration table lookup
 assign internal_read_request_address = frame_buffer_in_address;
-// 2. DELAY FRAME BUFFER DATA, ADDRESS, AND NEW_FRAME_ADDRESS_FLAG by 2 cycles
+// 2. DELAY FRAME BUFFER DATA, ADDRESS, AND use_this_frame_address_and_data by 2 cycles
 synchronizer #(
     .DEPTH(2),
     .WIDTH(16)
@@ -111,22 +111,22 @@ synchronizer #(
 synchronizer #(
     .DEPTH(2),
     .WIDTH(1)
-) sync_new_frame_ps1 (
+) sync_use_this_frame_address_and_data_ps1 (
     .clk_in  (clk),
     .rst_in  (rst),
-    .data_in (new_frame_address),
+    .data_in (use_this_frame_address_and_data),
     .data_out()
 );
 
 // 3. Threshold synchronized frame_buffer data, 
 // then append to shifted data from bram,
 // then store this back into the bram, 
-// only do when calibration mode is on and sync_new_frame_ps1 is high
+// only do when calibration mode is on and sync_use_this_frame_address_and_data_ps1 is high
 logic sync_fb_data_ps1_above_threshold;
 assign sync_fb_data_ps1_above_threshold = sync_fb_data_ps1.data_out > 16'bFFF0; // TODO: modify this definition
 
 assign internal_write_data = ((internal_read_data << 1) || (sync_fb_data_ps1_above_threshold));
-assign internal_write_enable = calibration_on && sync_new_frame_ps1.data_out;
+assign internal_write_enable = calibration_on && sync_use_this_frame_address_and_data_ps1.data_out;
 
 
 endmodule
