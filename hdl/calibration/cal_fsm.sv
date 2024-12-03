@@ -28,8 +28,7 @@ module cal_fsm
     // CALIBRATION TABLE I/O
         // FOR READ REQUESTS FROM HDMI
         input wire [CAL_TABLE_COUNTER_WIDTH-1:0] cal_table_read_request_address,
-        output logic [LED_ADDRESS_WIDTH:0] cal_table_read_data,
-
+        output logic [LED_ADDRESS_WIDTH:0] cal_table_read_data
 );
 
 
