@@ -35,6 +35,7 @@ module calibration_manager
         output logic [LED_ADDRESS_WIDTH:0] cal_table_read_data //DELAYED BY 2 CYCLES
 );
 
+// DEFINED LATER
 logic [CAL_TABLE_COUNTER_WIDTH-1:0] internal_read_request_address;
 logic [LED_ADDRESS_WIDTH:0]         internal_read_data;
 logic [LED_ADDRESS_WIDTH:0]         internal_write_data;
