@@ -20,6 +20,7 @@ async def setup(dut):
     await FallingEdge(dut.clk_in)
     dut.rst_in.value = 0
 
+    dut.request_type_in.value = 1  # write
     dut.request_valid_in.value = 0
 
     # assert dut.ready_out.value == 1, "Ready should be high after reset"
@@ -75,6 +76,21 @@ async def test_a(dut):
         await ClockCycles(dut.clk_in, 3)
 
     assert sum_total == summand_str, f"Sum should be {summand_str} but is {sum_total}"
+
+    for addr, expected in [(addr, summand_str), (addr + 1, 0)]:
+        dut.request_type_in.value = 0  # read
+
+        dut.addr_in.value = addr
+        dut.request_valid_in.value = 1
+        await ClockCycles(dut.clk_in, 1)
+        dut.request_valid_in.value = 0
+        await ClockCycles(dut.clk_in, 1)
+        await FallingEdge(dut.clk_in)
+        assert dut.result_valid_out.value == 1, "Result valid should be high"
+        assert (
+            dut.read_out.value == expected
+        ), f"Read should be {expected} but is {dut.read_out.value}"
+        await ClockCycles(dut.clk_in, 2)
 
     await ClockCycles(dut.clk_in, 20)
 
