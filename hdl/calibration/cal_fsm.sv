@@ -29,7 +29,16 @@ module cal_fsm
         // FOR READ REQUESTS FROM HDMI
         input wire [CAL_TABLE_COUNTER_WIDTH-1:0] cal_table_read_request_address,
         output logic [LED_ADDRESS_WIDTH:0] cal_table_read_data
+    // READ REQUESTS TO FRAME BUFFER
+        output logic [CAL_TABLE_COUNTER_WIDTH-1:0] frame_buffer_read_request_address,
+        input wire [15:0] frame_buffer_data
 );
+
+// Instantiate the calibration table bram
+// 2 Port so that we can write internally and allow hdmi to read externally
+
+
+
 
 
 endmodule
