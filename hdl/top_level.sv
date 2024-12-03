@@ -115,7 +115,7 @@ module top_level #(
     ) led_driver_inst (
         .rst_in(sys_rst_led),
         .clk_in(clk_100_passthrough),
-        .force_reset(btn[1]),
+        .force_reset(btn[0]),
         .green_in(next_green),
         .red_in(next_red),
         .blue_in(next_blue),
@@ -162,7 +162,7 @@ module top_level #(
     // this port also is specifically set to high drive by the XDC file.
     assign cam_xclk = clk_xc;
 
-    assign sys_rst_camera = btn[0] || btn[2];  //use for resetting camera side of logic
+    assign sys_rst_camera = btn[0];  //use for resetting camera side of logic
     assign sys_rst_pixel = btn[0];  //use for resetting hdmi/draw side of logic
     assign sys_rst_led = btn[0];  //use for resetting led side of logic
 
@@ -193,7 +193,7 @@ module top_level #(
     always_ff @(posedge clk_pixel) begin
         int out_shift;
         //use structure below to do scaling
-        if (btn[3]) begin  //1X scaling from frame buffer
+        if (1'b0) begin  //1X scaling from frame buffer
             out_shift = 0;
         end else begin  //4X scaling from frame buffer
             out_shift = 2;
@@ -548,7 +548,7 @@ module top_level #(
         .i2c_scl(i2c_scl),
         .i2c_sda(i2c_sda),
         .exposure(exposure),
-        .ready_update_in(btn[1])
+        .ready_update_in(btn[3])
     );
 
     // a handful of debug signals for writing to registers
