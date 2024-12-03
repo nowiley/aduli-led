@@ -4,15 +4,10 @@
 `default_nettype none
 
 // Module to debug calibration, four user interactions
-// Four user interactions:
-// 1. User presses button 0 to reset
-// 2. User presses button 1 to display next calibration frame on leds
-// 3. User presses button 2 to capture current calibration frame stores in bram 
-// (shows threshholded pixels on hdmi)
-// 4. Updates the camera settings (exposure) and resets calibration frames
-// 4. Displays ID of current calibration frame buffer on leds id[10:0] -> g [10:7] r [6:3] b [2:0]
-// ADDRESS WITDH MUST BE LESS THAN # CYCLES FOR LED
-// 3 CYCLE DELAY FROM WHEN NEXT LED_REQUEST IS MADE
+// Three interactions
+// Reset: reset
+// Increment: displays next bit of led address
+// Decrement: displays previous bit of led address
 module id_shower
 # (
     parameter int NUM_LEDS = 50,
@@ -22,7 +17,6 @@ module id_shower
     input wire rst,
     input wire increment_bit,
     input wire decrement_bit,
-    input wire [15:0] sw,
     input wire [LED_ADDRESS_WIDTH:0] next_led_request,
     output logic [7:0] green_out,
     output logic [7:0] red_out,
@@ -75,7 +69,7 @@ module id_shower
             case (next_led_request[address_bit_num])
             0: begin
                 green_out <= 0;
-                red_out <= 8'hFF;
+            red_out <= 8'hFF;
                 blue_out <= 0;
                 color_valid <= 1;
             end
