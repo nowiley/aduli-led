@@ -23,7 +23,7 @@ module id_shower
     output logic [7:0] blue_out,
     output logic color_valid,
     output logic displayed_frame_valid,
-    output logic [ADDRESS_BIT_NUMER_WIDTH-1:0] address_bit_num; // hold what bit lsb part of ids are showing
+    output logic [ADDRESS_BIT_NUMER_WIDTH-1:0] address_bit_num // hold what bit lsb part of ids are showing
 );
     localparam ADDRESS_BIT_NUMER_WIDTH = $clog2($clog2(NUM_LEDS));
 

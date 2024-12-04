@@ -84,7 +84,6 @@ module top_level #(
         .rst(btn[0]),
         .increment_bit(clean_btn1),
         .decrement_bit(clean_btn2),
-        .sw(sw),
         .next_led_request(next_led_request),
         .green_out(next_green),
         .red_out(next_red),
