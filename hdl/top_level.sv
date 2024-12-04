@@ -311,10 +311,18 @@ module top_level #(
     logic        active_draw_hdmi_ps3;
     logic        nf_hdmi_ps3;
 
+    logic [10:0] hcount_hdmi_ps7;
+    logic [ 9:0] vcount_hdmi_ps7;
+    logic        hsync_hdmi_ps7;
+    logic        vsync_hdmi_ps7;
+    logic        active_draw_hdmi_ps7;
+    logic        nf_hdmi_ps7;
+
+    localparam SigGenPackedWidth = 11 + 10 + 1 + 1 + 1 + 1;
     synchronizer #(
         .DEPTH(8),
-        .WIDTH(11 + 10 + 1 + 1 + 1 + 1)
-    ) sync_hdmi (
+        .WIDTH(SigGenPackedWidth)
+    ) sync_hdmi_ps3 (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .data_in({hcount_hdmi, vcount_hdmi, hsync_hdmi, vsync_hdmi, active_draw_hdmi, nf_hdmi}),
@@ -325,6 +333,29 @@ module top_level #(
             vsync_hdmi_ps3,
             active_draw_hdmi_ps3,
             nf_hdmi_ps3
+        })
+    );
+    synchronizer #(
+        .DEPTH(2),
+        .WIDTH(SigGenPackedWidth)
+    ) sync_hdmi_ps7 (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .data_in({
+            hcount_hdmi_ps3,
+            vcount_hdmi_ps3,
+            hsync_hdmi_ps3,
+            vsync_hdmi_ps3,
+            active_draw_hdmi_ps3,
+            nf_hdmi_ps3
+        }),
+        .data_out({
+            hcount_hdmi_ps7,
+            vcount_hdmi_ps7,
+            hsync_hdmi_ps7,
+            vsync_hdmi_ps7,
+            active_draw_hdmi_ps7,
+            nf_hdmi_ps7
         })
     );
 
@@ -424,7 +455,7 @@ module top_level #(
 
     logic [7:0] fb_red_ps2, fb_green_ps2, fb_blue_ps2;
     synchronizer #(
-        .DEPTH(1),
+        .DEPTH(3),
         .WIDTH(3 * 8)
     ) sync_fb_ps2 (
         .clk_in  (clk_pixel),
@@ -433,9 +464,21 @@ module top_level #(
         .data_out({fb_red_ps2, fb_green_ps2, fb_blue_ps2})
     );
 
+    logic detect0_ps4, detect1_ps4;
+    synchronizer #(
+        .DEPTH(2),
+        .WIDTH(2)
+    ) sync_detect_ps4 (
+        .clk_in  (clk_pixel),
+        .rst_in  (sys_rst_pixel),
+        .data_in ({detect0, detect1}),
+        .data_out({detect0_ps4, detect1_ps4})
+    );
+
+
     logic [7:0] selected_channel_ps5;
     synchronizer #(
-        .DEPTH(1),
+        .DEPTH(3),
         .WIDTH(8)
     ) sync_selected_channel (
         .clk_in  (clk_pixel),
@@ -446,7 +489,7 @@ module top_level #(
 
     logic [7:0] y_ps6;
     synchronizer #(
-        .DEPTH(1),
+        .DEPTH(3),
         .WIDTH(8)
     ) sync_y (
         .clk_in  (clk_pixel),
@@ -457,7 +500,7 @@ module top_level #(
 
     logic [7:0] ch_red_ps8, ch_green_ps8, ch_blue_ps8;
     synchronizer #(
-        .DEPTH(8),
+        .DEPTH(10),
         .WIDTH(3 * 8)
     ) sync_ch (
         .clk_in  (clk_pixel),
@@ -468,7 +511,7 @@ module top_level #(
 
     logic [7:0] img_red_ps9, img_green_ps9, img_blue_ps9;
     synchronizer #(
-        .DEPTH(4),
+        .DEPTH(6),
         .WIDTH(3 * 8)
     ) sync_img (
         .clk_in  (clk_pixel),
@@ -484,7 +527,7 @@ module top_level #(
         .camera_y_in(y_ps6),  //luminance DONE: needs (PS6)
         .channel_in(selected_channel_ps5),  //current channel being drawn DONE: needs (PS5)
         .thresholded_pixel_in({
-            detect1, detect0
+            detect1_ps4, detect0_ps4
         }),  //one bit mask signal DONE: needs (PS4) - NOT USED
         .crosshair_in({ch_red_ps8, ch_green_ps8, ch_blue_ps8}),  //DONE: needs (PS8)
         .com_sprite_pixel_in({
@@ -500,9 +543,9 @@ module top_level #(
         .red(red),
         .green(green),
         .blue(blue),
-        .vsync_hdmi(vsync_hdmi_ps3),
-        .hsync_hdmi(hsync_hdmi_ps3),
-        .active_draw_hdmi(active_draw_hdmi_ps3),
+        .vsync_hdmi(vsync_hdmi_ps7),
+        .hsync_hdmi(hsync_hdmi_ps7),
+        .active_draw_hdmi(active_draw_hdmi_ps7),
         .hdmi_tx_p(hdmi_tx_p),
         .hdmi_tx_n(hdmi_tx_n),
         .hdmi_clk_p(hdmi_clk_p),
