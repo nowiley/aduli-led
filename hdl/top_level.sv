@@ -108,7 +108,7 @@ module top_level #(
         .rst(sys_rst_pixel),
         .increment_id(clean_btn1),
         .read_request(active_draw_hdmi_ps3),
-        .displayed_frame_valid(),
+        .displayed_frame_valid(id_shower_inst.displayed_frame_valid),
         .hcount_in(hcount_hdmi_ps3),  // synchronized to detect / threshold outputs
         .vcount_in(vcount_hdmi_ps3),  // synchronized to detect / threshold outputs
         .new_frame_in(nf_hdmi),
@@ -547,7 +547,7 @@ module top_level #(
         .data_out({img_red_ps9, img_green_ps9, img_blue_ps9})
     );
 
-    wire demo_h_skipping = (hcount_hdmi_ps7[2:0] == 3'b000);
+    wire should_mark_pixel = (pixel_led_id[0] == 1'b1);
 
     video_mux mvm (
         .bg_in(display_choice),  //choose background
@@ -558,7 +558,7 @@ module top_level #(
         .thresholded_pixel_in({
             detect1_ps4, detect0_ps4
         }),  //one bit mask signal DONE: needs (PS4) - NOT USED
-        .should_mark_pixel_in(demo_h_skipping),
+        .should_mark_pixel_in(should_mark_pixel),
         .crosshair_in({ch_red_ps8, ch_green_ps8, ch_blue_ps8}),  //DONE: needs (PS8)
         .com_sprite_pixel_in({
             img_red_ps9, img_green_ps9, img_blue_ps9
