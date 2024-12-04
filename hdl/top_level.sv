@@ -76,6 +76,7 @@ module top_level #(
         .clean_out(clean_btn2)
     );
 
+    logic [$clog2($clog2(NUM_LEDS))-1:0] address_bit_num;
     //instantiate id shower module
     id_shower #(
         .NUM_LEDS(NUM_LEDS),
@@ -90,7 +91,8 @@ module top_level #(
         .red_out(next_red),
         .blue_out(next_blue),
         .color_valid(color_valid),
-        .displayed_frame_valid()
+        .displayed_frame_valid(),
+        .address_bit_num(address_bit_num)
     );
 
     logic [CounterWidth-1:0] pixel_led_id;
@@ -322,6 +324,7 @@ module top_level #(
         .lt_in  (lower_threshold),
         .ut_in  (upper_threshold),
         .val3_in(exposure),
+        .step_in(address_bit_num),
         .cat_out(ss_c),
         .an_out ({ss0_an, ss1_an})
     );
