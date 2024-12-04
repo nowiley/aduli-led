@@ -15,6 +15,7 @@
 `include "common/synchronizer.sv"
 `include "hdmi/hdmi_driver.sv"
 `include "cam/camera_configurator.sv"
+`include "calibration/calibration_fsm_w_accum.sv"
 `default_nettype none
 
 module top_level #(
@@ -90,6 +91,29 @@ module top_level #(
         .blue_out(next_blue),
         .color_valid(color_valid),
         .displayed_frame_valid()
+    );
+
+    logic [CounterWidth-1:0] pixel_led_id;
+    calibration_fsm_w_accum #(
+        .NUM_LEDS(NUM_LEDS),
+        .LED_ADDRESS_WIDTH(CounterWidth),
+        .NUM_FRAME_BUFFER_PIXELS(320 * 180),
+        .WAIT_CYCLES(10000000),
+        .ACTIVE_H_PIXELS(320),
+        .ACTIVE_LINES(180)
+    ) fsm (
+        .clk_pixel(clk_pixel),
+        .rst(sys_rst_pixel),
+        .increment_id(clean_btn1),
+        .read_request(active_draw_hdmi_ps3),
+        .displayed_frame_valid(),
+        .hcount_in(hcount_hdmi_ps3),  // synchronized to detect / threshold outputs
+        .vcount_in(vcount_hdmi_ps3),  // synchronized to detect / threshold outputs
+        .new_frame_in(nf_hdmi),
+        .detect_0(detect0),
+        .detect_1(detect1),
+        // .state(),
+        .read_out(pixel_led_id)
     );
 
     // instantiate pattern modules
