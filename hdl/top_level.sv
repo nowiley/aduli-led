@@ -111,7 +111,7 @@ module top_level #(
         .displayed_frame_valid(id_shower_inst.displayed_frame_valid),
         .hcount_in(hcount_hdmi_ps3),  // synchronized to detect / threshold outputs
         .vcount_in(vcount_hdmi_ps3),  // synchronized to detect / threshold outputs
-        .new_frame_in(nf_hdmi),
+        .new_frame_in(nf_hdmi_ps3),
         .detect_0(detect0),
         .detect_1(detect1),
         // .state(),
