@@ -27,7 +27,7 @@ module calibration_manager
         output logic displayed_frame_valid,
     // FRAME BUFFER VALUE and ADDRESS INPUTS
         input wire [CAL_TABLE_COUNTER_WIDTH-1:0] frame_buffer_in_address,
-        input wire frame_buffer_data,
+        input wire [15:0] frame_buffer_data,
         input wire use_this_frame_address_and_data,
     // CALIBRATION TABLE I/O
         // FOR READ REQUESTS FROM HDMI
