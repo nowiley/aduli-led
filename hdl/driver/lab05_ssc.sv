@@ -27,9 +27,9 @@ module lab05_ssc #(
             8'b0000_0001: led_out = bto7s_led_out;
             8'b0000_0010: led_out = bto7s_led_out;
             8'b0000_0100: led_out = 7'b0000000;
-            8'b0000_1000: led_out = bto7s_led_out;
+            8'b0000_1000: led_out = 7'b0000000;
             8'b0001_0000: led_out = bto7s_led_out;
-            8'b0010_0000: led_out = 7'b0000000;
+            8'b0010_0000: led_out = bto7s_led_out;
             8'b0100_0000: led_out = bto7s_led_out;
             8'b1000_0000: led_out = bto7s_led_out;
             default:      led_out = 7'b0000000;
@@ -41,9 +41,9 @@ module lab05_ssc #(
             8'b0000_0001: routed_vals = val3_in[3:0];
             8'b0000_0010: routed_vals = val3_in[7:4];
             8'b0000_0100: routed_vals = 4'b0;
-            8'b0000_1000: routed_vals = lt_in[3:0];
-            8'b0001_0000: routed_vals = lt_in[7:4];
-            8'b0010_0000: routed_vals = 4'b0;
+            8'b0000_1000: routed_vals = 4'b0;
+            8'b0001_0000: routed_vals = lt_in[3:0];
+            8'b0010_0000: routed_vals = lt_in[7:4];
             8'b0100_0000: routed_vals = ut_in[3:0];
             8'b1000_0000: routed_vals = ut_in[7:4];
             default:      routed_vals = 4'b0;
