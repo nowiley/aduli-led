@@ -99,10 +99,10 @@ module top_level #(
     calibration_fsm_w_accum #(
         .NUM_LEDS(NUM_LEDS),
         .LED_ADDRESS_WIDTH(CounterWidth),
-        .NUM_FRAME_BUFFER_PIXELS(320 * 180),
+        .NUM_FRAME_BUFFER_PIXELS(1280 * 720),
         .WAIT_CYCLES(10000000),
-        .ACTIVE_H_PIXELS(320),
-        .ACTIVE_LINES(180)
+        .ACTIVE_H_PIXELS(1280),
+        .ACTIVE_LINES(720)
     ) fsm (
         .clk_pixel(clk_pixel),
         .rst(sys_rst_pixel),
