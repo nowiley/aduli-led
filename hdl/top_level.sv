@@ -288,7 +288,7 @@ module top_level #(
     //threshold values used to determine what value  passes:
     assign lower_threshold = {sw[11:8], 4'b0};
     assign upper_threshold = {sw[15:12], 4'hF};
-    wire [7:0] exposure = {sw[7:1], 1'b0};
+    wire [7:0] exposure = {sw[7], sw[7], sw[6:2], 1'b0};
 
     //Thresholder: Takes in the full selected channedl and
     //based on upper and lower bounds provides a binary mask bit
@@ -463,7 +463,7 @@ module top_level #(
     // Video Mux: select from the different display modes based on switch values
     //used with switches for display selections
     wire [1:0] display_choice = {sw[0], 1'b0};
-    wire [1:0] target_choice = 2'b00;
+    wire [1:0] target_choice = sw[1] ? 2'b11 : 2'b00;
 
     //choose what to display from the camera:
     // * 'b00:  normal camera out
@@ -544,6 +544,8 @@ module top_level #(
         .data_out({img_red_ps9, img_green_ps9, img_blue_ps9})
     );
 
+    wire demo_h_skipping = (hcount_hdmi_ps7[2:0] == 3'b000);
+
     video_mux mvm (
         .bg_in(display_choice),  //choose background
         .target_in(target_choice),  //choose target
@@ -553,6 +555,7 @@ module top_level #(
         .thresholded_pixel_in({
             detect1_ps4, detect0_ps4
         }),  //one bit mask signal DONE: needs (PS4) - NOT USED
+        .should_mark_pixel_in(demo_h_skipping),
         .crosshair_in({ch_red_ps8, ch_green_ps8, ch_blue_ps8}),  //DONE: needs (PS8)
         .com_sprite_pixel_in({
             img_red_ps9, img_green_ps9, img_blue_ps9
