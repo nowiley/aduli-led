@@ -15,6 +15,7 @@
 `include "common/synchronizer.sv"
 `include "hdmi/hdmi_driver.sv"
 `include "cam/camera_configurator.sv"
+`include "calibration/calibration_fsm_w_accum.sv"
 `default_nettype none
 
 module top_level #(
@@ -75,6 +76,7 @@ module top_level #(
         .clean_out(clean_btn2)
     );
 
+    logic [$clog2($clog2(NUM_LEDS))-1:0] address_bit_num;
     //instantiate id shower module
     id_shower #(
         .NUM_LEDS(NUM_LEDS),
@@ -89,7 +91,31 @@ module top_level #(
         .red_out(next_red),
         .blue_out(next_blue),
         .color_valid(color_valid),
-        .displayed_frame_valid()
+        .displayed_frame_valid(),
+        .address_bit_num(address_bit_num)
+    );
+
+    logic [CounterWidth-1:0] pixel_led_id;
+    calibration_fsm_w_accum #(
+        .NUM_LEDS(NUM_LEDS),
+        .LED_ADDRESS_WIDTH(CounterWidth),
+        .NUM_FRAME_BUFFER_PIXELS(1280 * 720),
+        .WAIT_CYCLES(10000000),
+        .ACTIVE_H_PIXELS(1280),
+        .ACTIVE_LINES(720)
+    ) fsm (
+        .clk_pixel(clk_pixel),
+        .rst(sys_rst_pixel),
+        .increment_id(clean_btn1),
+        .read_request(active_draw_hdmi_ps3),
+        .displayed_frame_valid(id_shower_inst.displayed_frame_valid),
+        .hcount_in(hcount_hdmi_ps3),  // synchronized to detect / threshold outputs
+        .vcount_in(vcount_hdmi_ps3),  // synchronized to detect / threshold outputs
+        .new_frame_in(nf_hdmi_ps3),
+        .detect_0(detect0),
+        .detect_1(detect1),
+        // .state(),
+        .read_out(pixel_led_id)
     );
 
     // instantiate pattern modules
@@ -264,7 +290,7 @@ module top_level #(
     //threshold values used to determine what value  passes:
     assign lower_threshold = {sw[11:8], 4'b0};
     assign upper_threshold = {sw[15:12], 4'hF};
-    wire [7:0] exposure = {sw[7:1], 1'b0};
+    wire [7:0] exposure = {sw[7], sw[7], sw[6:2], 1'b0};
 
     //Thresholder: Takes in the full selected channedl and
     //based on upper and lower bounds provides a binary mask bit
@@ -298,6 +324,7 @@ module top_level #(
         .lt_in  (lower_threshold),
         .ut_in  (upper_threshold),
         .val3_in(exposure),
+        .step_in(address_bit_num),
         .cat_out(ss_c),
         .an_out ({ss0_an, ss1_an})
     );
@@ -311,10 +338,18 @@ module top_level #(
     logic        active_draw_hdmi_ps3;
     logic        nf_hdmi_ps3;
 
+    logic [10:0] hcount_hdmi_ps7;
+    logic [ 9:0] vcount_hdmi_ps7;
+    logic        hsync_hdmi_ps7;
+    logic        vsync_hdmi_ps7;
+    logic        active_draw_hdmi_ps7;
+    logic        nf_hdmi_ps7;
+
+    localparam SigGenPackedWidth = 11 + 10 + 1 + 1 + 1 + 1;
     synchronizer #(
         .DEPTH(8),
-        .WIDTH(11 + 10 + 1 + 1 + 1 + 1)
-    ) sync_hdmi (
+        .WIDTH(SigGenPackedWidth)
+    ) sync_hdmi_ps3 (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
         .data_in({hcount_hdmi, vcount_hdmi, hsync_hdmi, vsync_hdmi, active_draw_hdmi, nf_hdmi}),
@@ -325,6 +360,29 @@ module top_level #(
             vsync_hdmi_ps3,
             active_draw_hdmi_ps3,
             nf_hdmi_ps3
+        })
+    );
+    synchronizer #(
+        .DEPTH(2),
+        .WIDTH(SigGenPackedWidth)
+    ) sync_hdmi_ps7 (
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .data_in({
+            hcount_hdmi_ps3,
+            vcount_hdmi_ps3,
+            hsync_hdmi_ps3,
+            vsync_hdmi_ps3,
+            active_draw_hdmi_ps3,
+            nf_hdmi_ps3
+        }),
+        .data_out({
+            hcount_hdmi_ps7,
+            vcount_hdmi_ps7,
+            hsync_hdmi_ps7,
+            vsync_hdmi_ps7,
+            active_draw_hdmi_ps7,
+            nf_hdmi_ps7
         })
     );
 
@@ -408,7 +466,7 @@ module top_level #(
     // Video Mux: select from the different display modes based on switch values
     //used with switches for display selections
     wire [1:0] display_choice = {sw[0], 1'b0};
-    wire [1:0] target_choice = 2'b00;
+    wire [1:0] target_choice = sw[1] ? 2'b11 : 2'b00;
 
     //choose what to display from the camera:
     // * 'b00:  normal camera out
@@ -424,7 +482,7 @@ module top_level #(
 
     logic [7:0] fb_red_ps2, fb_green_ps2, fb_blue_ps2;
     synchronizer #(
-        .DEPTH(1),
+        .DEPTH(3),
         .WIDTH(3 * 8)
     ) sync_fb_ps2 (
         .clk_in  (clk_pixel),
@@ -433,9 +491,21 @@ module top_level #(
         .data_out({fb_red_ps2, fb_green_ps2, fb_blue_ps2})
     );
 
+    logic detect0_ps4, detect1_ps4;
+    synchronizer #(
+        .DEPTH(2),
+        .WIDTH(2)
+    ) sync_detect_ps4 (
+        .clk_in  (clk_pixel),
+        .rst_in  (sys_rst_pixel),
+        .data_in ({detect0, detect1}),
+        .data_out({detect0_ps4, detect1_ps4})
+    );
+
+
     logic [7:0] selected_channel_ps5;
     synchronizer #(
-        .DEPTH(1),
+        .DEPTH(3),
         .WIDTH(8)
     ) sync_selected_channel (
         .clk_in  (clk_pixel),
@@ -446,7 +516,7 @@ module top_level #(
 
     logic [7:0] y_ps6;
     synchronizer #(
-        .DEPTH(1),
+        .DEPTH(3),
         .WIDTH(8)
     ) sync_y (
         .clk_in  (clk_pixel),
@@ -457,7 +527,7 @@ module top_level #(
 
     logic [7:0] ch_red_ps8, ch_green_ps8, ch_blue_ps8;
     synchronizer #(
-        .DEPTH(8),
+        .DEPTH(10),
         .WIDTH(3 * 8)
     ) sync_ch (
         .clk_in  (clk_pixel),
@@ -468,7 +538,7 @@ module top_level #(
 
     logic [7:0] img_red_ps9, img_green_ps9, img_blue_ps9;
     synchronizer #(
-        .DEPTH(4),
+        .DEPTH(6),
         .WIDTH(3 * 8)
     ) sync_img (
         .clk_in  (clk_pixel),
@@ -477,6 +547,8 @@ module top_level #(
         .data_out({img_red_ps9, img_green_ps9, img_blue_ps9})
     );
 
+    wire should_mark_pixel = (pixel_led_id[0] == 1'b1);
+
     video_mux mvm (
         .bg_in(display_choice),  //choose background
         .target_in(target_choice),  //choose target
@@ -484,8 +556,9 @@ module top_level #(
         .camera_y_in(y_ps6),  //luminance DONE: needs (PS6)
         .channel_in(selected_channel_ps5),  //current channel being drawn DONE: needs (PS5)
         .thresholded_pixel_in({
-            detect1, detect0
+            detect1_ps4, detect0_ps4
         }),  //one bit mask signal DONE: needs (PS4) - NOT USED
+        .should_mark_pixel_in(should_mark_pixel),
         .crosshair_in({ch_red_ps8, ch_green_ps8, ch_blue_ps8}),  //DONE: needs (PS8)
         .com_sprite_pixel_in({
             img_red_ps9, img_green_ps9, img_blue_ps9
@@ -500,9 +573,9 @@ module top_level #(
         .red(red),
         .green(green),
         .blue(blue),
-        .vsync_hdmi(vsync_hdmi_ps3),
-        .hsync_hdmi(hsync_hdmi_ps3),
-        .active_draw_hdmi(active_draw_hdmi_ps3),
+        .vsync_hdmi(vsync_hdmi_ps7),
+        .hsync_hdmi(hsync_hdmi_ps7),
+        .active_draw_hdmi(active_draw_hdmi_ps7),
         .hdmi_tx_p(hdmi_tx_p),
         .hdmi_tx_n(hdmi_tx_n),
         .hdmi_clk_p(hdmi_clk_p),

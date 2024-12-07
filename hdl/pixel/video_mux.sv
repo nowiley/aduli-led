@@ -8,6 +8,7 @@ module video_mux (
     input wire [7:0] camera_y_in,  //y channel of ycrcb camera conversion
     input wire [7:0] channel_in,  //the channel from selection module
     input wire [1:0] thresholded_pixel_in,  //
+    input wire should_mark_pixel_in,
     input wire [23:0] com_sprite_pixel_in,
     input wire crosshair_in,
     output logic [23:0] pixel_out
@@ -46,7 +47,7 @@ module video_mux (
             2'b00: l_2 = l_1;
             2'b01: l_2 = crosshair_in ? 24'h00FF00 : l_1;
             2'b10: l_2 = (com_sprite_pixel_in > 0) ? com_sprite_pixel_in : l_1;
-            2'b11: l_2 = 24'hFF7700;  //test color
+            2'b11: l_2 = should_mark_pixel_in ? 24'hFF7700 : l_1;  //test color
         endcase
     end
 
