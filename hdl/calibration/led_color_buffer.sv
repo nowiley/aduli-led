@@ -17,7 +17,7 @@ module led_color_buffer
         input wire clk_pixel,
         input wire [LED_ADDRESS_WIDTH-1:0] led_lookup_address,
         input wire [CAMERA_COLOR_WIDTH-1:0] camera_color,
-        input wire led_color_buffer_enable,
+        input wire led_color_buffer_update_enable,
     
     // For requests from led driver
     // Clocked off of LED driver clock
@@ -26,12 +26,13 @@ module led_color_buffer
         output logic [7:0] green_out,
         output logic [7:0] red_out,
         output logic [7:0] blue_out,
+        output logic [CAMERA_COLOR_WIDTH-1:0] raw_data_out,
         output logic color_valid
 );
 
 
 logic write_to_buffer;
-assign write_to_buffer = ((led_color_buffer_enable) && (led_lookup_address <= NUM_LEDS));
+assign write_to_buffer = ((led_color_buffer_update_enable) && (led_lookup_address <= NUM_LEDS));
 logic data_out;
 
 xilinx_true_dual_port_read_first_2_clock_ram #(
@@ -66,7 +67,7 @@ assign blue_out = {data_out[4:0], 3'b0};
 logic [NEXT_LED_REQ_WIDTH-1:0] last_led_request_address;
 logic [NEXT_LED_REQ_WIDTH-1:0] last_last_led_request_address;
 
-always_ff @(posedge clk_led or posedge rst) begin
+always_ff @(posedge clk_led) begin
     if (rst) begin
         last_led_request_address <= next_led_request_address;
         last_last_led_request_address <= 0;
@@ -79,12 +80,6 @@ end
 
 // Color is valid if current request is the same as the request the last 2 cycles
 assign color_valid = ((current_led_request == last_last_led_request_address) && (last_led_request_address == next_led_request_address));
-
-
-
-
-
-
 
 endmodule 
 
