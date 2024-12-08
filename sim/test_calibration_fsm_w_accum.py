@@ -51,10 +51,9 @@ async def test_a(dut):
                     dut.hcount_in.value = h
                     dut.vcount_in.value = v
                     dut.new_frame_in.value = 0
-            dut.new_frame_in.value = 1
-            await ClockCycles(dut.clk_pixel, 1)
-            dut.new_frame_in.value = 0
-            await ClockCycles(dut.clk_pixel, 1)
+
+                    if v == ACTIVE_V and h == ACTIVE_H:
+                        dut.new_frame_in.value = 1
 
     rec_frame_buf = []
     dut._log.info("GOING TO REAd")
@@ -67,10 +66,10 @@ async def test_a(dut):
                 dut.hcount_in.value = h
                 dut.vcount_in.value = v
                 await FallingEdge(dut.clk_pixel)
-                await ClockCycles(dut.clk_pixel, 10)
                 assert (
                     dut.read_out.value == 0b1011
                 ), f"Read out should be 0b1011, but got {dut.read_out.value}"
+            await ClockCycles(dut.clk_pixel, 1)
 
 
 @cocotb.test()
