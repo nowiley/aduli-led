@@ -302,10 +302,10 @@ module top_level #(
     // );
 
     //threshold values used to determine what value  passes:
-    assign lower_threshold = {sw[15:12], 4'b0};
+    assign lower_threshold = {sw[15:13], 5'b0};
     assign upper_threshold = 8'hFF;
     wire [7:0] exposure = {sw[7], sw[7], sw[6:2], 1'b0};
-    wire [3:0] sel_led = sw[11:8];
+    wire [4:0] sel_led = sw[12:8];
 
     //Thresholder: Takes in the full selected channedl and
     //based on upper and lower bounds provides a binary mask bit
@@ -340,7 +340,7 @@ module top_level #(
         .ut_in(upper_threshold),
         .val3_in(exposure),
         .step_in(address_bit_num),
-        .sel_led_in(sel_led),
+        .sel_led_in(sel_led[3:0]),
         .cat_out(ss_c),
         .an_out({ss0_an, ss1_an})
     );
@@ -563,7 +563,7 @@ module top_level #(
         .data_out({img_red_ps9, img_green_ps9, img_blue_ps9})
     );
 
-    wire should_mark_pixel = (pixel_led_id[0] == 1'b1);
+    wire should_mark_pixel = (pixel_led_id == sel_led);
 
     video_mux mvm (
         .bg_in(display_choice),  //choose background
