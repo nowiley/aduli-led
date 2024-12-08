@@ -10,7 +10,7 @@ from cocotb.runner import get_runner
 from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge
 
 NUM_LEDS = 90
-LED_ADDRED_WIDTH = 10
+LED_ADDRESS_WIDTH = 10
 CAMERA_COLOR_WIDTH = 16
 
 @cocotb.test()
@@ -53,12 +53,13 @@ async def test_a(dut):
 
     ## READING OUT BUFFER
     for i in range(NUM_LEDS):
-        dut.led_lookup_address.value = i
-        await ClockCycles(dut.clk_led, 1)
+        dut.next_led_request_address.value = i
+        await ClockCycles(dut.clk_led, 10)
+        print(f"Address {i}, color {dut.data_out.value}")
         if i in addresses:
-            assert dut.led_color.value == colors[addresses.index(i)], f"Error at address {i}"
+            assert dut.data_out.value == colors[addresses.index(i)], f"Error at address {i}, expected {colors[addresses.index(i)]}, got {dut.data_out.value}"
         else:
-            assert dut.led_color.value == 0xAAAA, f"Error at address {i}, expected 0xAAAA, got {dut.led_color.value:x}"
+            assert dut.data_out.value == 0xAAAA, f"Error at address {i}, expected 0xAAAA, got {dut.data_out.value}"
 
     
 
@@ -72,7 +73,7 @@ def is_runner():
     build_test_args = ["-Wall"]
     parameters = {
         "NUM_LEDS": NUM_LEDS,
-        "LED_ADDRED_WIDTH": LED_ADDRED_WIDTH,
+        "LED_ADDRESS_WIDTH": LED_ADDRESS_WIDTH,
         "CAMERA_COLOR_WIDTH": CAMERA_COLOR_WIDTH
     }
     sys.path.append(str(proj_path / "sim"))

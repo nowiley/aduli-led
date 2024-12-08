@@ -26,17 +26,16 @@ module led_color_buffer
         output logic [7:0] green_out,
         output logic [7:0] red_out,
         output logic [7:0] blue_out,
-        output logic [CAMERA_COLOR_WIDTH-1:0] raw_data_out,
+        output logic [CAMERA_COLOR_WIDTH-1:0] data_out,
         output logic color_valid
 );
 
 
 logic write_to_buffer;
 assign write_to_buffer = ((led_color_buffer_update_enable) && (led_lookup_address <= NUM_LEDS));
-logic data_out;
 
 xilinx_true_dual_port_read_first_2_clock_ram #(
-    .DATA_WIDTH(CAMERA_COLOR_WIDTH),
+    .RAM_WIDTH(CAMERA_COLOR_WIDTH),
     .RAM_DEPTH(NUM_LEDS)
 ) led_color_ram (
     // INPUT FROM CAMERA
@@ -55,7 +54,7 @@ xilinx_true_dual_port_read_first_2_clock_ram #(
     .enb(1'b1),                             // Port B RAM Enable, for additional power savings, disable port when not in use
     .rstb(rst),                             // Port B output reset (does not affect memory contents)
     .doutb(data_out),                       // Port B RAM output data
-    .regceb(1'b1),                          // Port B output register enable
+    .regceb(1'b1)                          // Port B output register enable
 );
 
 
@@ -72,14 +71,13 @@ always_ff @(posedge clk_led) begin
         last_led_request_address <= next_led_request_address;
         last_last_led_request_address <= 0;
     end else begin
-        // last_last_led_request_address <= last_led_request_address;
-        // last_led_request_address <= next_led_request_address;
-        {last_last_led_request_address, last_led_request_address} <= {last_led_request_address, next_led_request_address};
+        last_last_led_request_address <= last_led_request_address;
+        last_led_request_address <= next_led_request_address;
     end
 end
 
 // Color is valid if current request is the same as the request the last 2 cycles
-assign color_valid = ((current_led_request == last_last_led_request_address) && (last_led_request_address == next_led_request_address));
+assign color_valid = ((next_led_request_address == last_last_led_request_address) && (last_led_request_address == next_led_request_address));
 
 endmodule 
 
