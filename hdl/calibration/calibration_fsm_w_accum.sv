@@ -27,6 +27,7 @@ module calibration_fsm_w_accum
     // User interactions
         input wire increment_id,
         input wire read_request,
+        input wire should_overwrite,
 
     // LED SHOWR INPUT
         input wire displayed_frame_valid,
@@ -101,7 +102,7 @@ wire [ADDRB_DEPTH_WIDTH-1:0] addr_out_wire;
 
 always_comb begin  // https://github.com/steveicarus/iverilog/issues/1015
     if ((state == CAPTURE_FRAME) && good_addrb) begin
-        request_wire = WRITE;
+        request_wire = accum_request_t'(should_overwrite ? WRITE_OVER : WRITE);
     end else begin
         request_wire = READ;
     end
