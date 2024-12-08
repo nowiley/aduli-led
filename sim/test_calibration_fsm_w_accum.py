@@ -11,11 +11,11 @@ from cocotb.triggers import ClockCycles, FallingEdge, RisingEdge
 
 NUM_LEDS = 50
 NUM_FRAMES = 10
-ACTIVE_H = 12
-ACTIVE_V = 8
-H_PORCH = 2
-V_PORCH = 2
-WAIT_CYCLES = 1
+ACTIVE_H = 128
+ACTIVE_V = 72
+H_PORCH = 6
+V_PORCH = 6
+WAIT_CYCLES = 10
 
 
 @cocotb.test()
@@ -39,7 +39,7 @@ async def test_a(dut):
         await ClockCycles(dut.clk_pixel, 2)
         dut.displayed_frame_valid.value = 1
         dut.increment_id.value = 0
-        await ClockCycles(dut.clk_pixel, 2)
+        await ClockCycles(dut.clk_pixel, WAIT_CYCLES + 1)
         dut.new_frame_in.value = 1
         await ClockCycles(dut.clk_pixel, 1)
         for start_v, start_h in [(0, 0)]:
@@ -65,11 +65,11 @@ async def test_a(dut):
                 dut.read_request.value = 1
                 dut.hcount_in.value = h
                 dut.vcount_in.value = v
+                await ClockCycles(dut.clk_pixel, 3)
                 await FallingEdge(dut.clk_pixel)
                 assert (
                     dut.read_out.value == 0b1011
                 ), f"Read out should be 0b1011, but got {dut.read_out.value}"
-            await ClockCycles(dut.clk_pixel, 1)
 
 
 @cocotb.test()
