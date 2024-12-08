@@ -7,6 +7,7 @@ create_clock -add -name gclk -period 10.000 -waveform {0 4} [get_ports {clk_100m
 set_property CFGBVS VCCO [current_design]
 set_property CONFIG_VOLTAGE 3.3 [current_design]
 
+set_max_delay -datapath_only 6 -from [get_clocks clk_100_cw_fast] -to [get_clocks clk_pixel_cw_hdmi]
 
 # CAMERA BOARD v2
 
