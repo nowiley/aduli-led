@@ -96,7 +96,7 @@ end
 
 wire summand_in = detect_1;
 accum_request_t request_wire;
-wire request_valid_in = read_request || (good_addrb && active_draw && state == CAPTURE_FRAME);
+wire request_valid_in = read_request || (good_addrb && active_draw && (state == CAPTURE_FRAME));
 wire [ADDRB_DEPTH_WIDTH-1:0] addr_out_wire;
 
 always_comb begin  // https://github.com/steveicarus/iverilog/issues/1015
