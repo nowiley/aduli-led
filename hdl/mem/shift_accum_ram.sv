@@ -6,7 +6,8 @@
 typedef enum logic [1:0] {
     READ = 0,
     WRITE = 1,
-    WRITE_OVER = 2
+    WRITE_OVER = 2,
+    DISABLE = 3
 } accum_request_t;
 
 module shift_accum_ram #(
@@ -26,6 +27,7 @@ module shift_accum_ram #(
     output accum_request_t request_type_out,
     output logic result_valid_out
 );
+    parameter DISABLED_VAL = {WIDTH{1'b1}};
 
     synchronizer #(
         .WIDTH($clog2(DEPTH)),
@@ -67,12 +69,14 @@ module shift_accum_ram #(
     always_comb begin
         if (request_type_out == WRITE_OVER) begin
             sum_out = summand_sync.data_out;
+        end else if ((request_type_out == DISABLE) || (read_out == DISABLED_VAL)) begin
+            sum_out = DISABLED_VAL;  // maintain disable lockout
         end else begin
             sum_out = (read_out << 1) | summand_sync.data_out;
         end
     end
 
-    wire is_write = (request_type_out == WRITE) || (request_type_out == WRITE_OVER);
+    wire is_write = (request_type_out == WRITE) || (request_type_out == WRITE_OVER) || (request_type_out == DISABLE);
 
     xilinx_true_dual_port_read_first_1_clock_ram #(
         .RAM_WIDTH(WIDTH),
