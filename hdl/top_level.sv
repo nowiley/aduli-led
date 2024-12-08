@@ -13,6 +13,7 @@
 `include "pixel/video_mux.sv"
 `include "image/image_sprite_pop_cat.sv"
 `include "common/synchronizer.sv"
+`include "common/clock_cross.sv"
 `include "hdmi/hdmi_driver.sv"
 `include "cam/camera_configurator.sv"
 `include "calibration/calibration_fsm_w_accum.sv"
@@ -91,8 +92,22 @@ module top_level #(
         .red_out(next_red),
         .blue_out(next_blue),
         .color_valid(color_valid),
-        .displayed_frame_valid(),
+        // .displayed_frame_valid(),
         .address_bit_num(address_bit_num)
+    );
+
+    clock_cross led_frame_valid_cc (
+        .rst_in(sys_rst_pixel),
+        .clk_src_in(clk_100_passthrough),
+        .clk_dst_in(clk_pixel),
+        .data_src_in(id_shower_inst.displayed_frame_valid)
+        // .data_dst_out()
+    );
+    clock_cross increment_id (
+        .rst_in(sys_rst_pixel),
+        .clk_src_in(clk_100_passthrough),
+        .clk_dst_in(clk_pixel),
+        .data_src_in(clean_btn1)
     );
 
     logic [CounterWidth-1:0] pixel_led_id;
@@ -105,9 +120,9 @@ module top_level #(
     ) fsm (
         .clk_pixel(clk_pixel),
         .rst(sys_rst_pixel),
-        .increment_id(clean_btn1),
+        .increment_id(increment_id.data_dst_out),
         .read_request(active_draw_hdmi_ps3),
-        .displayed_frame_valid(id_shower_inst.displayed_frame_valid),
+        .displayed_frame_valid(led_frame_valid_cc.data_dst_out),
         .hcount_in(hcount_hdmi_ps3),  // synchronized to detect / threshold outputs
         .vcount_in(vcount_hdmi_ps3),  // synchronized to detect / threshold outputs
         .new_frame_in(nf_hdmi_ps3),
