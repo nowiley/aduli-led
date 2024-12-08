@@ -103,6 +103,12 @@ module top_level #(
         .data_src_in(id_shower_inst.displayed_frame_valid)
         // .data_dst_out()
     );
+    clock_cross increment_id (
+        .rst_in(sys_rst_pixel),
+        .clk_src_in(clk_100_passthrough),
+        .clk_dst_in(clk_pixel),
+        .data_src_in(clean_btn1)
+    );
 
     logic [CounterWidth-1:0] pixel_led_id;
     calibration_fsm_w_accum #(
@@ -115,7 +121,7 @@ module top_level #(
     ) fsm (
         .clk_pixel(clk_pixel),
         .rst(sys_rst_pixel),
-        .increment_id(1'b0),
+        .increment_id(increment_id.data_dst_out),
         .read_request(active_draw_hdmi_ps3),
         .displayed_frame_valid(led_frame_valid_cc.data_dst_out),
         .hcount_in(hcount_hdmi_ps3),  // synchronized to detect / threshold outputs
