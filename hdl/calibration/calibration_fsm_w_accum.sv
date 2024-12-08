@@ -100,7 +100,7 @@ wire request_valid_in = read_request || (good_addrb && active_draw && (state == 
 wire [ADDRB_DEPTH_WIDTH-1:0] addr_out_wire;
 
 always_comb begin  // https://github.com/steveicarus/iverilog/issues/1015
-    if (state == CAPTURE_FRAME) begin
+    if ((state == CAPTURE_FRAME) && good_addrb) begin
         request_wire = WRITE;
     end else begin
         request_wire = READ;
