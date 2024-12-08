@@ -32,7 +32,7 @@ async def test_a(dut):
     await FallingEdge(dut.clk_pixel)
     dut.rst.value = 0
     dut.read_request.value = 0
-    
+
     for detect_1 in [1, 0, 1, 1]:
         dut.increment_id.value = 1
         dut.displayed_frame_valid.value = 0
@@ -42,22 +42,19 @@ async def test_a(dut):
         await ClockCycles(dut.clk_pixel, 2)
         dut.new_frame_in.value = 1
         await ClockCycles(dut.clk_pixel, 1)
-        for (start_v, start_h) in [ (0, 0)]:
+        for start_v, start_h in [(0, 0)]:
             for v in range(start_v, ACTIVE_V + V_PORCH):
                 for h in range(start_h, ACTIVE_H + H_PORCH):
                     await FallingEdge(dut.clk_pixel)
-                    #active draw
+                    # active draw
                     dut.detect_1.value = detect_1
                     dut.hcount_in.value = h
                     dut.vcount_in.value = v
-                    dut.new_frame_in.value = 0 
+                    dut.new_frame_in.value = 0
             dut.new_frame_in.value = 1
             await ClockCycles(dut.clk_pixel, 1)
             dut.new_frame_in.value = 0
             await ClockCycles(dut.clk_pixel, 1)
-
-                    
-                    
 
     rec_frame_buf = []
     dut._log.info("GOING TO REAd")
@@ -70,12 +67,49 @@ async def test_a(dut):
                 dut.hcount_in.value = h
                 dut.vcount_in.value = v
                 await FallingEdge(dut.clk_pixel)
-                await ClockCycles(dut.clk_pixel,10)
-                assert dut.read_out.value == 0b1011, f"Read out should be 0b1011, but got {dut.read_out.value}"  
+                await ClockCycles(dut.clk_pixel, 10)
+                assert (
+                    dut.read_out.value == 0b1011
+                ), f"Read out should be 0b1011, but got {dut.read_out.value}"
 
 
+@cocotb.test()
+async def test_b(dut):
+    """Test for driving first pixel a correct color"""
+    dut._log.info("Starting...")
+    cocotb.start_soon(Clock(dut.clk_pixel, 10, units="ns").start())
 
-                
+    await ClockCycles(dut.clk_pixel, 2)  # check the pre-reset behavior
+
+    # Reset
+    dut.rst.value = 1
+    await ClockCycles(dut.clk_pixel, 3)
+    await FallingEdge(dut.clk_pixel)
+    dut.rst.value = 0
+    dut.read_request.value = 0
+
+    for detect_1 in [1, 0, 1, 1]:
+        dut.increment_id.value = 1
+        dut.displayed_frame_valid.value = 0
+        await ClockCycles(dut.clk_pixel, 2)
+        dut.displayed_frame_valid.value = 1
+        # dut.increment_id.value = 0
+        await ClockCycles(dut.clk_pixel, 2)
+        dut.new_frame_in.value = 1
+        await ClockCycles(dut.clk_pixel, 1)
+        for start_v, start_h in [(0, 0)]:
+            for v in range(start_v, ACTIVE_V + V_PORCH):
+                for h in range(start_h, ACTIVE_H + H_PORCH):
+                    await FallingEdge(dut.clk_pixel)
+                    # active draw
+                    dut.detect_1.value = detect_1
+                    dut.hcount_in.value = h
+                    dut.vcount_in.value = v
+                    dut.new_frame_in.value = 0
+            dut.new_frame_in.value = 1
+            await ClockCycles(dut.clk_pixel, 1)
+            dut.new_frame_in.value = 0
+            await ClockCycles(dut.clk_pixel, 1)
 
 
 def is_runner():
@@ -90,7 +124,7 @@ def is_runner():
         "NUM_LEDS": NUM_LEDS,
         "ACTIVE_H_PIXELS": ACTIVE_H,
         "ACTIVE_LINES": ACTIVE_V,
-        "WAIT_CYCLES": WAIT_CYCLES
+        "WAIT_CYCLES": WAIT_CYCLES,
     }
     sys.path.append(str(proj_path / "sim"))
     runner = get_runner(sim)
