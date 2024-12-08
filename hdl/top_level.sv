@@ -288,9 +288,10 @@ module top_level #(
     // );
 
     //threshold values used to determine what value  passes:
-    assign lower_threshold = {sw[11:8], 4'b0};
-    assign upper_threshold = {sw[15:12], 4'hF};
+    assign lower_threshold = {sw[15:12], 4'b0};
+    assign upper_threshold = 8'hFF;
     wire [7:0] exposure = {sw[7], sw[7], sw[6:2], 1'b0};
+    wire [3:0] sel_led = sw[11:8];
 
     //Thresholder: Takes in the full selected channedl and
     //based on upper and lower bounds provides a binary mask bit
@@ -302,7 +303,7 @@ module top_level #(
         .pixel_in(fb_blue),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
-        .mask_out(detect0)  //single bit if pixel within mask.
+        .mask_out(detect1)  //single bit if pixel within mask.
     );
     threshold mt_red (
         .clk_in(clk_pixel),
@@ -310,7 +311,7 @@ module top_level #(
         .pixel_in(fb_red),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
-        .mask_out(detect1)  //single bit if pixel within mask.
+        .mask_out(detect0)  //single bit if pixel within mask.
     );
 
 
@@ -319,14 +320,15 @@ module top_level #(
     // thresholds and selected channel
     // special customized version
     lab05_ssc mssc (
-        .clk_in (clk_pixel),
-        .rst_in (sys_rst_pixel),
-        .lt_in  (lower_threshold),
-        .ut_in  (upper_threshold),
+        .clk_in(clk_pixel),
+        .rst_in(sys_rst_pixel),
+        .lt_in(lower_threshold),
+        .ut_in(upper_threshold),
         .val3_in(exposure),
         .step_in(address_bit_num),
+        .sel_led_in(sel_led),
         .cat_out(ss_c),
-        .an_out ({ss0_an, ss1_an})
+        .an_out({ss0_an, ss1_an})
     );
     assign ss0_c = ss_c;  //control upper four digit's cathodes!
     assign ss1_c = ss_c;  //same as above but for lower four digits!
