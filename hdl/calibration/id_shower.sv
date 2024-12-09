@@ -64,7 +64,7 @@ module id_shower #(
                 1: begin
                     green_out <= 0;
                     red_out <= 0;
-                    blue_out <= 8'hFF;
+                    blue_out <= 8'h8F;
                     color_valid <= 1;
                 end
                 default: begin  // SHOULD NEVER GO HERE
