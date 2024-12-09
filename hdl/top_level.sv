@@ -395,7 +395,7 @@ module top_level #(
     threshold mt_blue (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
-        .pixel_in(fb_blue),
+        .pixel_in(cb),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
         .mask_out(detect1)  //single bit if pixel within mask.
@@ -403,7 +403,7 @@ module top_level #(
     threshold mt_red (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
-        .pixel_in(fb_red),
+        .pixel_in(cr),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
         .mask_out(detect0)  //single bit if pixel within mask.
