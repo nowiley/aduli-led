@@ -10,7 +10,7 @@
 // Decrement: displays previous bit of led address
 module id_shower #(
     parameter int NUM_LEDS = 50,
-    parameter int LED_ADDRESS_WIDTH = 6
+    parameter int LED_ADDRESS_WIDTH = $clog2(NUM_LEDS)
 ) (
     input wire clk,
     input wire rst,
