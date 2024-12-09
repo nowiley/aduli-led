@@ -60,12 +60,17 @@ module calibration_step_fsm #(
             old_nf <= new_frame_in;
             old_start_calibration_step <= start_calibration_step;
 
+            if ((state == CAPTURE_FRAME) && new_frame_in) begin
+                should_overwrite <= 0;
+            end else if (should_overwrite_latch) begin
+                should_overwrite <= 1;
+            end
+
             case (state)
                 IDLE: begin
                     if (start_calibration_step) begin  // && !old_start_calibration_step
                         state <= WAIT_FOR_CAM;
                         wait_counter <= 0;
-                        should_overwrite <= should_overwrite_latch;
                     end
                 end
                 WAIT_FOR_CAM: begin
@@ -83,7 +88,6 @@ module calibration_step_fsm #(
                 CAPTURE_FRAME: begin
                     if (new_frame_in) begin
                         state <= IDLE;
-                        should_overwrite <= 0;
                     end
                 end
             endcase
