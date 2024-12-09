@@ -10,7 +10,7 @@ typedef enum logic [2:0] {
     CAPTURE_FRAME = 4
 } fsm_state_t;
 
-module calibration_fsm_w_accum 
+module calibration_step_fsm
 #(
     parameter int NUM_LEDS = 50,
     parameter int LED_ADDRESS_WIDTH = 10,
