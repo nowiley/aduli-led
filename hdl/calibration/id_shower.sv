@@ -10,25 +10,23 @@
 // Decrement: displays previous bit of led address
 module id_shower #(
     parameter int NUM_LEDS = 50,
-    parameter int LED_ADDRESS_WIDTH = 6
+    parameter int LED_ADDRESS_WIDTH = $clog2(NUM_LEDS)
 ) (
     input wire clk,
     input wire rst,
-    input wire increment_bit,
-    input wire decrement_bit,
     input wire [LED_ADDRESS_WIDTH-1:0] next_led_request,
     output logic [7:0] green_out,
     output logic [7:0] red_out,
     output logic [7:0] blue_out,
     output logic color_valid,
     output logic displayed_frame_valid,
-    output logic [ADDRESS_BIT_NUMER_WIDTH-1:0] address_bit_num // hold what bit lsb part of ids are showing
+    input wire update_address_bit_num, 
+    input wire [ADDRESS_BIT_NUMER_WIDTH-1:0] address_bit_num_req, // hold what bit lsb part of ids are showing
+    output logic [ADDRESS_BIT_NUMER_WIDTH-1:0] current_address_bit_num // hold what bit lsb part of ids are showing
 );
     localparam ADDRESS_BIT_NUMER_WIDTH = $clog2($clog2(NUM_LEDS));
 
     logic [LED_ADDRESS_WIDTH-1:0] prev_request;
-    logic prev_increment_bit;
-    logic prev_decrement_bit;
 
     enum logic [1:0] {
         SEEN_ZERO_ZERO_REQUESTS,
@@ -45,27 +43,18 @@ module id_shower #(
             red_out <= 0;
             blue_out <= 0;
             color_valid <= 0;
-            address_bit_num <= 0;
+            current_address_bit_num <= 0;
             prev_request <= 0;
-            prev_increment_bit <= increment_bit;
-            prev_decrement_bit <= decrement_bit;
             display_state <= SEEN_ZERO_ZERO_REQUESTS;
             // HANDLE INCREMENT AND DECREMENT
-        end else if ((increment_bit && !prev_increment_bit) || (decrement_bit && ! prev_decrement_bit)) begin
-            prev_increment_bit <= increment_bit;
-            prev_decrement_bit <= decrement_bit;
+        end else if (update_address_bit_num) begin
             flag <= 1;
-            if (increment_bit && !prev_increment_bit) begin
-                address_bit_num <= address_bit_num + 1;
-                display_state   <= SEEN_ZERO_ZERO_REQUESTS;
-            end else if (decrement_bit && !prev_decrement_bit) begin
-                address_bit_num <= address_bit_num - 1;
-                display_state   <= SEEN_ZERO_ZERO_REQUESTS;
-            end
+            current_address_bit_num <= address_bit_num_req;
+            display_state   <= SEEN_ZERO_ZERO_REQUESTS;
             // HANDLE GENERAL CASE
         end else begin
             // DISPLAY CURRENT BIT OF REQUEST ADDRESS
-            case (next_led_request[LED_ADDRESS_WIDTH-1-address_bit_num])
+            case (next_led_request[LED_ADDRESS_WIDTH-1-current_address_bit_num])
                 0: begin
                     green_out <= 0;
                     red_out <= 8'hFF;
@@ -87,8 +76,6 @@ module id_shower #(
             endcase
 
             prev_request <= next_led_request;
-            prev_increment_bit <= increment_bit;
-            prev_decrement_bit <= decrement_bit;
             // accept new requests
             if (next_led_request != prev_request) begin
                 if (prev_request == 0) begin

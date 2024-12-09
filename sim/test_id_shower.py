@@ -25,8 +25,8 @@ async def test_a(dut):
     await ClockCycles(dut.clk, 3)
     await FallingEdge(dut.clk)
     dut.rst.value = 0
-    dut.increment_bit.value = 0
-    dut.decrement_bit.value = 0
+    dut.update_address_bit_num.value = 0
+    dut.address_bit_num_req.value = 0
 
     # Start Driving
     for frame in range(NUM_FRAMES):
@@ -35,9 +35,11 @@ async def test_a(dut):
             dut.next_led_request.value = pix
 
             if pix == 2 and frame == 2:
-                dut._log.info("Pressing Button 1")
-                dut.increment_bit.value = 1
+                dut._log.info("Update to addr 1")
+                dut.address_bit_num_req.value = 1
+                dut.update_address_bit_num.value = 1
             await ClockCycles(dut.clk, 1)
+            dut.update_address_bit_num.value = 0
 
             # assert dut.color_valid.value == 0, "ColorValid should be 0 when recieving a new pixel request"
             await ClockCycles(dut.clk, 10)
@@ -45,12 +47,13 @@ async def test_a(dut):
             if frame > 7:
                 #these frames should be showing bit 1, if bit 1 = 0 then red only if bit 1 = 1 then blue only
                 pix_bin_rep = bin(pix)[2:]
-                while len(pix_bin_rep) < 8:
+                while len(pix_bin_rep) < 6:
                     pix_bin_rep = "0" + pix_bin_rep
-                print("L:KAJFL:IYHQOINFL:KJ", pix_bin_rep)
-                if pix_bin_rep[-2] == "0":
+                # pix_bin_rep = pix_bin_rep[::-1]
+                print("ALAKJFL:KJL" , pix_bin_rep)
+                if pix_bin_rep[1] == "0":
                     assert dut.red_out.value == 0xFF, "RedOut should be 1 when bit 1 is 0"
-                    assert dut.blue_out.value == 0x0, "BlueOut should be 0 when bit 1 is 0"
+                    assert dut.blue_out.value == 0x00, "BlueOut should be 0 when bit 1 is 0"
                 else:
                     assert dut.red_out.value == 0x00, "RedOut should be 0 when bit 1 is 1"
                     assert dut.blue_out.value == 0xFF, "BlueOut should be 1 when bit 1 is 1"
