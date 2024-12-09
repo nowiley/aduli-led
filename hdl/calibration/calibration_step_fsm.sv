@@ -23,12 +23,12 @@ module calibration_step_fsm #(
     localparam int WAIT_COUNTER_WIDTH = $clog2(WAIT_CYCLES),
     localparam int ADDRB_DEPTH_WIDTH = $clog2(NUM_FRAME_BUFFER_PIXELS)
 ) (
-    input wire clk_pixel,
-    input wire rst,
+    input  wire  clk_pixel,
+    input  wire  rst,
     // User interactions
-    input wire start_calibration_step,
-    input wire read_request,
-    input wire should_overwrite_latch,
+    input  wire  start_calibration_step,
+    input  wire  read_request,
+    input  wire  should_overwrite_latch,
     output logic should_overwrite,
 
     // Address, thresh, nframe inputs
@@ -38,13 +38,12 @@ module calibration_step_fsm #(
     input wire detect_0,
     input wire detect_1,
     output calibration_step_state_t state,
-    output logic [LED_ADDRESS_WIDTH-1:0] read_out
-
+    output logic [LED_ADDRESS_WIDTH-1:0] read_out,
+    output logic [WAIT_COUNTER_WIDTH-1:0] wait_counter
 );
 
     logic old_nf;
     logic old_start_calibration_step;
-    logic [WAIT_COUNTER_WIDTH-1:0] wait_counter;
     wire active_draw = ((hcount_in < ACTIVE_H_PIXELS) && (vcount_in < ACTIVE_LINES)) && !rst;
     wire top_left = ((hcount_in[1:0] == 2'b00) && (vcount_in[1:0] == 2'b00));
     wire good_addrb = top_left && active_draw;
@@ -73,6 +72,7 @@ module calibration_step_fsm #(
                     wait_counter <= wait_counter + 1;
                     if (wait_counter == WAIT_CYCLES - 1) begin
                         state <= WAIT_FOR_NFRAME;
+                        wait_counter <= 0;
                     end
                 end
                 WAIT_FOR_NFRAME: begin
