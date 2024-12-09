@@ -2,13 +2,15 @@
 `include "mem/shift_accum_ram.sv"
 `default_nettype none
 
+`ifndef CALIBRATION_STEP_FSM_DEFINES
+`define CALIBRATION_STEP_FSM_DEFINES
 typedef enum logic [1:0] {
     IDLE = 0,
     WAIT_FOR_CAM = 1,
     WAIT_FOR_NFRAME = 2,
     CAPTURE_FRAME = 3
 } calibration_step_state_t;
-
+`endif
 
 module calibration_step_fsm #(
     parameter int NUM_LEDS = 50,

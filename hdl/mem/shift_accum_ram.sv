@@ -3,12 +3,15 @@
 `include "common/synchronizer.sv"
 `default_nettype none
 
+`ifndef SHIFT_ACCUM_RAM_DEFINES
+`define SHIFT_ACCUM_RAM_DEFINES
 typedef enum logic [1:0] {
     READ = 0,
     WRITE = 1,
     WRITE_OVER = 2,
     DISABLE = 3
 } accum_request_t;
+`endif
 
 module shift_accum_ram #(
     parameter WIDTH,
