@@ -3,9 +3,11 @@
 `include "common/synchronizer.sv"
 `default_nettype none
 
-typedef enum logic {
-    READ  = 0,
-    WRITE = 1
+typedef enum logic [1:0] {
+    READ = 0,
+    WRITE = 1,
+    WRITE_OVER = 2,
+    DISABLE = 3
 } accum_request_t;
 
 module shift_accum_ram #(
@@ -25,6 +27,7 @@ module shift_accum_ram #(
     output accum_request_t request_type_out,
     output logic result_valid_out
 );
+    parameter DISABLED_VAL = {WIDTH{1'b1}};
 
     synchronizer #(
         .WIDTH($clog2(DEPTH)),
@@ -63,7 +66,17 @@ module shift_accum_ram #(
         .data_out(result_valid_out)
     );
 
-    assign sum_out = (read_out << 1) | summand_sync.data_out;
+    always_comb begin
+        if (request_type_out == WRITE_OVER) begin
+            sum_out = summand_sync.data_out;
+        end else if ((request_type_out == DISABLE) || (read_out == DISABLED_VAL)) begin
+            sum_out = DISABLED_VAL;  // maintain disable lockout
+        end else begin
+            sum_out = (read_out << 1) | summand_sync.data_out;
+        end
+    end
+
+    wire is_write = (request_type_out == WRITE) || (request_type_out == WRITE_OVER) || (request_type_out == DISABLE);
 
     xilinx_true_dual_port_read_first_1_clock_ram #(
         .RAM_WIDTH(WIDTH),
@@ -80,7 +93,7 @@ module shift_accum_ram #(
         .addrb(addr_sync.data_out),  // Port B address bus,
         // .doutb(),  // Port B RAM output data,
         .dinb(sum_out),  // Port B RAM input data, width determined from RAM_WIDTH
-        .web(result_valid_out && request_type_out),  // Port B write enable
+        .web(result_valid_out && is_write),  // Port B write enable
         .ena(1'b1),  // Port A RAM Enable
         .enb(1'b1),  // Port B RAM Enable,
         .rsta(rst_in),  // Port A output reset

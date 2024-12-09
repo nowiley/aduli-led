@@ -143,6 +143,95 @@ async def test_pipelined(dut):
     await ClockCycles(dut.clk_in, 20)
 
 
+@cocotb.test()
+async def test_disabling_and_overwriting(dut):
+    """Test for driving first pixel a correct color"""
+    await setup(dut)
+    dut._log.info("Checking summation")
+
+    assert dut.DISABLED_VAL == 2**WIDTH - 1, "Disabled value should be all ones"
+
+    sum_total = 0
+    addrs = [10, 12]
+
+    # unzip the summands into a list of tuples
+
+    dut.request_valid_in.value = 1
+    for addr in addrs:
+        dut.addr_in.value = addr
+        dut.request_type_in.value = 3  # disable
+
+        dut._log.info(f"Disabling addr {addr}")
+
+        # dut.request_valid_in.value = 0
+        await ClockCycles(dut.clk_in, 1)
+    dut.request_valid_in.value = 0
+    await ClockCycles(dut.clk_in, 1)  # takes at least 3 cycles for first one to save
+
+    # lets try to disrupt them (this SHOULD have no effect)
+    dut.request_valid_in.value = 1
+    for addr in addrs:
+        dut.addr_in.value = addr
+        dut.summand_in.value = 0  # shift in a zero at the bottom
+        dut.request_type_in.value = 1  # write
+
+        dut._log.info(f"Attempting to shift in a 0 to addr {addr}")
+
+        await ClockCycles(dut.clk_in, 1)
+    await ClockCycles(dut.clk_in, 1)
+    dut.request_valid_in.value = 0
+
+    for addr in addrs:
+        expected = dut.DISABLED_VAL
+        dut.request_type_in.value = 0  # read
+
+        dut.addr_in.value = addr
+        dut.request_valid_in.value = 1
+        await ClockCycles(dut.clk_in, 1)
+        dut.request_valid_in.value = 0
+        await ClockCycles(dut.clk_in, 1)
+        await FallingEdge(dut.clk_in)
+        assert dut.result_valid_out.value == 1, "Result valid should be high"
+        assert (
+            dut.read_out.value == expected
+        ), f"Read should be {expected} but is {dut.read_out.value}"
+        await ClockCycles(dut.clk_in, 2)
+
+    await ClockCycles(dut.clk_in, 4)
+
+    # Let's actually disrupt them with an overwrite
+    # lets try to disrupt them (this SHOULD have no effect)
+    dut.request_valid_in.value = 1
+    for addr in addrs:
+        dut.addr_in.value = addr
+        dut.summand_in.value = 1  # shift in a single one at the bottom
+        dut.request_type_in.value = 2  # write over
+
+        dut._log.info(f"Attempting to overwrite with 1 to addr {addr}")
+
+        await ClockCycles(dut.clk_in, 1)
+    await ClockCycles(dut.clk_in, 1)
+    dut.request_valid_in.value = 0
+
+    for addr in addrs:
+        expected = 0b1
+        dut.request_type_in.value = 0  # read
+
+        dut.addr_in.value = addr
+        dut.request_valid_in.value = 1
+        await ClockCycles(dut.clk_in, 1)
+        dut.request_valid_in.value = 0
+        await ClockCycles(dut.clk_in, 1)
+        await FallingEdge(dut.clk_in)
+        assert dut.result_valid_out.value == 1, "Result valid should be high"
+        assert (
+            dut.read_out.value == expected
+        ), f"Read should be {expected} but is {dut.read_out.value}"
+        await ClockCycles(dut.clk_in, 2)
+
+    await ClockCycles(dut.clk_in, 20)
+
+
 def is_runner():
     """LED Driver Tester."""
     hdl_toplevel_lang = os.getenv("HDL_TOPLEVEL_LANG", "verilog")

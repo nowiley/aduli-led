@@ -122,6 +122,7 @@ module top_level #(
         .rst(sys_rst_pixel),
         .increment_id(increment_id.data_dst_out),
         .read_request(active_draw_hdmi_ps3),
+        .should_overwrite(1'b0),
         .displayed_frame_valid(led_frame_valid_cc.data_dst_out),
         .hcount_in(hcount_hdmi_ps3),  // synchronized to detect / threshold outputs
         .vcount_in(vcount_hdmi_ps3),  // synchronized to detect / threshold outputs

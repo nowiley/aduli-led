@@ -32,6 +32,7 @@ async def test_a(dut):
     await FallingEdge(dut.clk_pixel)
     dut.rst.value = 0
     dut.read_request.value = 0
+    dut.should_overwrite.value = 0
 
     for detect_1 in [1, 0, 1, 1]:
         dut.increment_id.value = 1
