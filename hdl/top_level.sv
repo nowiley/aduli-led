@@ -16,7 +16,7 @@
 `include "common/clock_cross.sv"
 `include "hdmi/hdmi_driver.sv"
 `include "cam/camera_configurator.sv"
-`include "calibration/calibration_fsm_w_accum.sv"
+`include "calibration/calibration_step_fsm.sv"
 `default_nettype none
 
 module top_level #(
@@ -111,13 +111,13 @@ module top_level #(
     );
 
     logic [CounterWidth-1:0] pixel_led_id;
-    calibration_fsm_w_accum #(
+    calibration_step_fsm #(
         .NUM_LEDS(NUM_LEDS),
         .LED_ADDRESS_WIDTH(CounterWidth),
         .WAIT_CYCLES(10000000),
         .ACTIVE_H_PIXELS(1280),
         .ACTIVE_LINES(720)
-    ) fsm (
+    ) calibration_step_fsm (
         .clk_pixel(clk_pixel),
         .rst(sys_rst_pixel),
         .increment_id(increment_id.data_dst_out),
