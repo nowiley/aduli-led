@@ -191,7 +191,7 @@ module top_level #(
         .clk_in(clk_100_passthrough),
         .rst_in(sys_rst_pixel),
         .start_in(clean_btn1),
-        .proceed_in(clean_btn2),
+        // .proceed_in(clean_btn2),
         .led_display_valid_in(id_shower_inst.displayed_frame_valid),
         // .calibration_state_in(debounce_metastable_fsm_state.clean_out),
         .calibration_step_going_in(we_going_cc.data_dst_out),
@@ -282,7 +282,7 @@ module top_level #(
     // this port also is specifically set to high drive by the XDC file.
     assign cam_xclk = clk_xc;
 
-    assign sys_rst_camera = btn[0];  //use for resetting camera side of logic
+    assign sys_rst_camera = btn[0] || btn[2];  //use for resetting camera side of logic
     assign sys_rst_pixel = btn[0];  //use for resetting hdmi/draw side of logic
     assign sys_rst_led = btn[0];  //use for resetting led side of logic
 
