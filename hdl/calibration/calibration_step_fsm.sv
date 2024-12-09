@@ -63,7 +63,7 @@ module calibration_step_fsm #(
 
             case (state)
                 IDLE: begin
-                    if (start_calibration_step && !old_start_calibration_step) begin
+                    if (start_calibration_step) begin  // && !old_start_calibration_step
                         state <= WAIT_FOR_CAM;
                         wait_counter <= 0;
                         should_overwrite <= should_overwrite_latch;
