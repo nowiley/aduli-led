@@ -8,7 +8,7 @@ typedef enum logic [2:0] {
     WAIT_FOR_CAM = 2,
     WAIT_FOR_NFRAME = 3,
     CAPTURE_FRAME = 4
-} fsm_state_t;
+} calibration_step_state_t;
 
 module calibration_step_fsm
 #(
@@ -38,7 +38,7 @@ module calibration_step_fsm
         input wire new_frame_in,
         input wire detect_0,
         input wire detect_1,
-        output fsm_state_t state,
+        output calibration_step_state_t state,
         output logic [LED_ADDRESS_WIDTH-1:0] read_out
 
 );
