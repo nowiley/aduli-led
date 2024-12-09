@@ -2,12 +2,11 @@
 `include "mem/shift_accum_ram.sv"
 `default_nettype none
 
-typedef enum logic [2:0] {
+typedef enum logic [1:0] {
     IDLE = 0,
-    WAIT_FOR_LED_STRAND_VALID = 1,
-    WAIT_FOR_CAM = 2,
-    WAIT_FOR_NFRAME = 3,
-    CAPTURE_FRAME = 4
+    WAIT_FOR_CAM = 1,
+    WAIT_FOR_NFRAME = 2,
+    CAPTURE_FRAME = 3
 } calibration_step_state_t;
 
 typedef enum logic {
@@ -32,9 +31,6 @@ module calibration_step_fsm #(
     input wire start_calibration_step,
     input wire read_request,
     input wire should_overwrite_latch,
-
-    // LED SHOWR INPUT
-    input wire displayed_frame_valid,
 
     // Address, thresh, nframe inputs
     input wire [10:0] hcount_in,
