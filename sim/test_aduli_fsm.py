@@ -64,6 +64,7 @@ async def test_a(dut):
         for i in range(10):
             assert dut.state.value == 2, "Should be in calib display state"
             await ClockCycles(dut.clk_in, 1)
+            await FallingEdge(dut.clk_in)
             assert (
                 dut.calibration_start_out.value == 0
             ), "Should be done starting calibration"

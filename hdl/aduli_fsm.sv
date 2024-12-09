@@ -61,11 +61,10 @@ module aduli_fsm #(
                 end
                 RUN_CALIB_STEP: begin
                     if (calibration_state_in != IDLE) begin
-                        calibration_started <= 1;
+                        calibration_started   <= 1;
+                        calibration_start_out <= 0;
+                        calibration_first_out <= 0;
                     end
-
-                    calibration_start_out <= 0;
-                    calibration_first_out <= 0;  // should have been picked up by now
 
                     if ((calibration_state_in == IDLE) && calibration_started) begin
                         calibration_started <= 0;
