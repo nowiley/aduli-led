@@ -2,11 +2,14 @@
 `include "calibration/calibration_step_fsm.sv"
 `default_nettype none
 
+`ifndef ADULI_FSM_DEFINES
+`define ADULI_FSM_DEFINES
 typedef enum logic [1:0] {
     DISPLAY = 0,
     SHOW_CALIB_LED = 1,
     RUN_CALIB_STEP = 2
 } aduli_state_t;
+`endif
 
 module aduli_fsm #(
     parameter int NUM_LEDS = 50,
