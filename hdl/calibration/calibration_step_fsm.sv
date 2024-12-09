@@ -9,10 +9,6 @@ typedef enum logic [1:0] {
     CAPTURE_FRAME = 3
 } calibration_step_state_t;
 
-typedef enum logic {
-    STANDARD = 0,
-    OVERWRITE = 1
-} update_mode_t;
 
 module calibration_step_fsm #(
     parameter int NUM_LEDS = 50,
@@ -31,6 +27,7 @@ module calibration_step_fsm #(
     input wire start_calibration_step,
     input wire read_request,
     input wire should_overwrite_latch,
+    output logic should_overwrite,
 
     // Address, thresh, nframe inputs
     input wire [10:0] hcount_in,
@@ -43,7 +40,6 @@ module calibration_step_fsm #(
 
 );
 
-    logic should_overwrite;
     logic old_nf;
     logic old_start_calibration_step;
     logic [WAIT_COUNTER_WIDTH-1:0] wait_counter;
@@ -58,7 +54,6 @@ module calibration_step_fsm #(
             wait_counter <= 0;
             old_nf <= 0;
             old_start_calibration_step <= 0;
-            update_mode <= STANDARD;
             should_overwrite <= 0;
         end else begin
             old_nf <= new_frame_in;

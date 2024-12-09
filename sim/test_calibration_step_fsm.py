@@ -35,12 +35,9 @@ async def test_a(dut):
     dut.should_overwrite.value = 0
 
     for detect_1 in [1, 0, 1, 1]:
-        dut.increment_id.value = 1
-        dut.displayed_frame_valid.value = 0
-        await ClockCycles(dut.clk_pixel, 2)
-        dut.displayed_frame_valid.value = 1
-        dut.increment_id.value = 0
+        dut.start_calibration_step.value = 1
         await ClockCycles(dut.clk_pixel, WAIT_CYCLES + 1)
+        dut.start_calibration_step.value = 0
         dut.new_frame_in.value = 1
         await ClockCycles(dut.clk_pixel, 1)
         for start_v, start_h in [(0, 0)]:
@@ -89,10 +86,8 @@ async def test_b(dut):
     dut.read_request.value = 0
 
     for detect_1 in [1, 0, 1, 1]:
-        dut.increment_id.value = 1
-        dut.displayed_frame_valid.value = 0
+        dut.start_calibration_step.value = 1
         await ClockCycles(dut.clk_pixel, 2)
-        dut.displayed_frame_valid.value = 1
         # dut.increment_id.value = 0
         await ClockCycles(dut.clk_pixel, 2)
         dut.new_frame_in.value = 1
@@ -118,7 +113,7 @@ def is_runner():
     sim = os.getenv("SIM", "icarus")
     proj_path = Path(__file__).resolve().parent.parent
     sys.path.append(str(proj_path / "sim" / "model"))
-    sources = [proj_path / "hdl" / "calibration" / "calibration_fsm_w_accum.sv"]
+    sources = [proj_path / "hdl" / "calibration" / "calibration_step_fsm.sv"]
     build_test_args = ["-Wall"]
     parameters = {
         "NUM_LEDS": NUM_LEDS,
@@ -130,7 +125,7 @@ def is_runner():
     runner = get_runner(sim)
     runner.build(
         sources=sources,
-        hdl_toplevel="calibration_fsm_w_accum",
+        hdl_toplevel="calibration_step_fsm",
         includes=[proj_path / "hdl"],
         always=True,
         build_args=build_test_args,
@@ -140,8 +135,8 @@ def is_runner():
     )
     run_test_args = []
     runner.test(
-        hdl_toplevel="calibration_fsm_w_accum",
-        test_module="test_calibration_fsm_w_accum",
+        hdl_toplevel="calibration_step_fsm",
+        test_module="test_calibration_step_fsm",
         test_args=run_test_args,
         waves=True,
     )
