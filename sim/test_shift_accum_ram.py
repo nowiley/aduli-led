@@ -95,6 +95,54 @@ async def test_a(dut):
     await ClockCycles(dut.clk_in, 20)
 
 
+@cocotb.test()
+async def test_pipelined(dut):
+    """Test for driving first pixel a correct color"""
+    await setup(dut)
+    dut._log.info("Checking summation")
+
+    sum_total = 0
+    addr_summands = {
+        10: [0, 1, 0, 0, 1, 1, 0, 1],
+        11: [0, 1, 0, 0, 1, 1, 0, 1],
+        12: [0, 1, 0, 0, 1, 1, 0, 1],
+    }
+
+    # unzip the summands into a list of tuples
+    summands = list(zip(*addr_summands.values()))
+
+    dut.request_valid_in.value = 1
+    for summand_set in summands:
+        for i, addr in enumerate(addr_summands.keys()):
+            dut.addr_in.value = addr
+            dut.summand_in.value = summand_set[i]
+
+            dut._log.info(f"Setting summand to {summand_set[i]}")
+
+            # dut.request_valid_in.value = 0
+            await ClockCycles(dut.clk_in, 1)
+
+    for addr, expected_bits in addr_summands.items():
+        expected = (
+            sum(bit << i for i, bit in enumerate(reversed(expected_bits))) % 2**WIDTH
+        )
+        dut.request_type_in.value = 0  # read
+
+        dut.addr_in.value = addr
+        dut.request_valid_in.value = 1
+        await ClockCycles(dut.clk_in, 1)
+        dut.request_valid_in.value = 0
+        await ClockCycles(dut.clk_in, 1)
+        await FallingEdge(dut.clk_in)
+        assert dut.result_valid_out.value == 1, "Result valid should be high"
+        assert (
+            dut.read_out.value == expected
+        ), f"Read should be {expected} but is {dut.read_out.value}"
+        await ClockCycles(dut.clk_in, 2)
+
+    await ClockCycles(dut.clk_in, 20)
+
+
 def is_runner():
     """LED Driver Tester."""
     hdl_toplevel_lang = os.getenv("HDL_TOPLEVEL_LANG", "verilog")

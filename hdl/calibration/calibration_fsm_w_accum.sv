@@ -14,12 +14,13 @@ module calibration_fsm_w_accum
 #(
     parameter int NUM_LEDS = 50,
     parameter int LED_ADDRESS_WIDTH = 10,
-    parameter int NUM_FRAME_BUFFER_PIXELS = 360 * 180,
     parameter int WAIT_CYCLES = 10000000,
-    parameter int ACTIVE_H_PIXELS = 320,
-    parameter int ACTIVE_LINES = 180,
+    parameter int ACTIVE_H_PIXELS = 1280,
+    parameter int ACTIVE_LINES = 720,
+    localparam int downsample_shift = 2,
+    localparam int NUM_FRAME_BUFFER_PIXELS = (ACTIVE_H_PIXELS>>downsample_shift) * (ACTIVE_LINES>>downsample_shift),
     localparam int WAIT_COUNTER_WIDTH = $clog2(WAIT_CYCLES),
-    localparam int ADDRB_DEPTH_WIDTH = $clog2(ACTIVE_H_PIXELS * ACTIVE_LINES)
+    localparam int ADDRB_DEPTH_WIDTH = $clog2(NUM_FRAME_BUFFER_PIXELS)
 )(
         input wire clk_pixel,
         input wire rst,
@@ -45,10 +46,10 @@ module calibration_fsm_w_accum
 logic old_nf;
 logic old_increment_id;
 logic [WAIT_COUNTER_WIDTH-1:0] wait_counter;
-wire active_draw = (hcount_in < ACTIVE_H_PIXELS && vcount_in < ACTIVE_LINES) && !rst;
+wire active_draw = ((hcount_in < ACTIVE_H_PIXELS) && (vcount_in < ACTIVE_LINES)) && !rst;
 wire top_left = ((hcount_in[1:0] == 2'b00) && (vcount_in[1:0] == 2'b00));
 wire good_addrb = top_left && active_draw;
-wire [ADDRB_DEPTH_WIDTH-1:0] addrb = (hcount_in >> 2) + (ACTIVE_H_PIXELS>>2) * (vcount_in >> 2);
+wire [ADDRB_DEPTH_WIDTH-1:0] addrb = (hcount_in >> downsample_shift) + (ACTIVE_H_PIXELS>>downsample_shift) * (vcount_in >> 2);
 
 always_ff @(posedge clk_pixel) begin
     if (rst) begin
@@ -95,11 +96,11 @@ end
 
 wire summand_in = detect_1;
 accum_request_t request_wire;
-wire request_valid_in = read_request || (good_addrb && active_draw && state == CAPTURE_FRAME);
+wire request_valid_in = read_request || (good_addrb && active_draw && (state == CAPTURE_FRAME));
 wire [ADDRB_DEPTH_WIDTH-1:0] addr_out_wire;
 
 always_comb begin  // https://github.com/steveicarus/iverilog/issues/1015
-    if (state == CAPTURE_FRAME) begin
+    if ((state == CAPTURE_FRAME) && good_addrb) begin
         request_wire = WRITE;
     end else begin
         request_wire = READ;
@@ -109,7 +110,7 @@ end
 // Instantiat the accum thing
 shift_accum_ram #(
     .WIDTH(LED_ADDRESS_WIDTH),
-    .DEPTH(ACTIVE_H_PIXELS * ACTIVE_LINES)
+    .DEPTH(NUM_FRAME_BUFFER_PIXELS)
 ) accum_ram (
     .clk_in(clk_pixel),
     .rst_in(rst),

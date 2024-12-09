@@ -17,7 +17,7 @@ module id_shower
     input wire rst,
     input wire increment_bit,
     input wire decrement_bit,
-    input wire [LED_ADDRESS_WIDTH:0] next_led_request,
+    input wire [LED_ADDRESS_WIDTH-1:0] next_led_request,
     output logic [7:0] green_out,
     output logic [7:0] red_out,
     output logic [7:0] blue_out,
@@ -66,7 +66,7 @@ module id_shower
         // HANDLE GENERAL CASE
         end else begin
             // DISPLAY CURRENT BIT OF REQUEST ADDRESS
-            case (next_led_request[address_bit_num])
+            case (next_led_request[LED_ADDRESS_WIDTH - 1 - address_bit_num])
             0: begin
                 green_out <= 0;
             red_out <= 8'hFF;
