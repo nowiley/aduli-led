@@ -234,7 +234,7 @@ module top_level #(
         end
     end
 
-    led_color_buffer # (
+    led_color_buffer #(
         .NUM_LEDS(NUM_LEDS),
         .LED_ADDRESS_WIDTH(CounterWidth)
     ) led_color_buffer_instance (
@@ -257,7 +257,7 @@ module top_level #(
     logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
     logic color_valid;
 
-    wire led_mux_mode = aduli_fsm_inst.state == DISPLAY ? CAMERA_COLOR_OUT : ID_SHOWER_OUT;
+    wire  led_mux_mode = aduli_fsm_inst.state == DISPLAY ? CAMERA_COLOR_OUT : ID_SHOWER_OUT;
 
     led_out_mux #(
         .COLOR_WIDTH(COLOR_WIDTH)
