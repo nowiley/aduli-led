@@ -15,6 +15,7 @@ module camera_configurator #(
     inout wire i2c_scl,
     inout wire i2c_sda,
     input wire [7:0] exposure,
+    input wire manual_exposure,
     input wire ready_update_in
     // ...
 );
@@ -40,9 +41,10 @@ module camera_configurator #(
         .douta(bram_dout)  // RAM output data, width determined from RAM_WIDTH
     );
 
-    enum logic {
+    enum logic [1:0] {
         STOP,
-        SENT_EXPOSURE_1
+        SENT_EXPOSURE_1,
+        SENT_EXPOSURE_2
     } update_state;
     wire start_update = ready_update_in && update_state == STOP;
     wire sending_updates = start_update || (update_state != STOP);
@@ -69,6 +71,10 @@ module camera_configurator #(
             SENT_EXPOSURE_1: begin
                 update_addr = 239;
                 bram_din = {16'h3502, lo_nibble, 4'b0};
+            end
+            SENT_EXPOSURE_2: begin
+                update_addr = 240;
+                bram_din = {16'h3503, 6'b0, manual_exposure, 1'b0};
             end
         endcase
     end

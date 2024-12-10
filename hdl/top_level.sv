@@ -572,7 +572,7 @@ module top_level #(
     // Video Mux: select from the different display modes based on switch values
     //used with switches for display selections
     wire [1:0] display_choice = {sw[0], 1'b0};
-    wire [1:0] target_choice = sw[1] ? 2'b11 : 2'b00;
+    wire [1:0] target_choice = (1'b1) ? 2'b11 : 2'b00;  // sw[1]
 
     //choose what to display from the camera:
     // * 'b00:  normal camera out
@@ -726,6 +726,7 @@ module top_level #(
         .i2c_scl(i2c_scl),
         .i2c_sda(i2c_sda),
         .exposure(exposure),
+        .manual_exposure(sw[1]),
         .ready_update_in(btn[3])
     );
 
