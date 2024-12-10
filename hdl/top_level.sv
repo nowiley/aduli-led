@@ -109,6 +109,15 @@ module top_level #(
     );
     clock_cross #(
         .DEPTH_DST(6)
+    ) calibration_step_idle_cc (
+        .rst_in(sys_rst_pixel),
+        .clk_src_in(clk_pixel),
+        .clk_dst_in(clk_100_passthrough),
+        .data_src_in(calibration_step_fsm_m.state == IDLE)
+        // .data_dst_out()
+    );
+    clock_cross #(
+        .DEPTH_DST(6)
     ) we_going_cc (
         .rst_in(sys_rst_pixel),
         .clk_src_in(clk_pixel),
@@ -195,7 +204,7 @@ module top_level #(
         .led_display_valid_in(id_shower_inst.displayed_frame_valid),
         // .calibration_state_in(debounce_metastable_fsm_state.clean_out),
         .calibration_step_going_in(we_going_cc.data_dst_out),
-        .calibration_step_ready_in(calibration_step_state_cc.data_dst_out == IDLE),
+        .calibration_step_ready_in(calibration_step_idle_cc.data_dst_out),
         .led_addr_bit_sel_out(address_bit_num),
         // .led_addr_bit_sel_start_out(),
         // .calibration_start_out(),
