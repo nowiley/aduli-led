@@ -730,15 +730,17 @@ module top_level #(
     );
 
     // a handful of debug signals for writing to registers
-    assign led[0] = bus_active;
-    assign led[1] = cr_init_valid;
-    assign led[2] = cr_init_ready;
-    assign led[10:3] = 0;
-    assign led[11] = aduli_fsm_inst.calibration_step_ready_in;
-    assign led[12] = aduli_fsm_inst.calibration_first_out;
-    assign led[13] = calibration_start_first_cc.data_dst_out[0];
-    assign led[14] = aduli_fsm_inst.calibration_start_out;
-    assign led[15] = calibration_start_first_cc.data_dst_out[1];
+    assign led[0]   = bus_active;
+    assign led[1]   = cr_init_valid;
+    assign led[2]   = cr_init_ready;
+    assign led[8:3] = 0;
+    assign led[9]   = calibration_step_fsm_m.should_overwrite_latch;
+    assign led[10]  = calibration_step_fsm_m.should_overwrite;
+    assign led[11]  = aduli_fsm_inst.calibration_step_ready_in;
+    assign led[12]  = aduli_fsm_inst.calibration_first_out;
+    assign led[13]  = calibration_start_first_cc.data_dst_out[0];
+    assign led[14]  = aduli_fsm_inst.calibration_start_out;
+    assign led[15]  = calibration_start_first_cc.data_dst_out[1];
 endmodule  // top_level
 
 
