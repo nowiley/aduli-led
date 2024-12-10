@@ -2,18 +2,20 @@
 `include "mem/shift_accum_ram.sv"
 `default_nettype none
 
+`ifndef CALIBRATION_STEP_FSM_DEFINES
+`define CALIBRATION_STEP_FSM_DEFINES
 typedef enum logic [1:0] {
     IDLE = 0,
     WAIT_FOR_CAM = 1,
     WAIT_FOR_NFRAME = 2,
     CAPTURE_FRAME = 3
 } calibration_step_state_t;
-
+`endif
 
 module calibration_step_fsm #(
     parameter int NUM_LEDS = 50,
     parameter int LED_ADDRESS_WIDTH = 10,
-    parameter int WAIT_CYCLES = 10000000,
+    parameter int WAIT_CYCLES = 5_000_000,
     parameter int ACTIVE_H_PIXELS = 1280,
     parameter int ACTIVE_LINES = 720,
     localparam int downsample_shift = 2,
@@ -21,12 +23,12 @@ module calibration_step_fsm #(
     localparam int WAIT_COUNTER_WIDTH = $clog2(WAIT_CYCLES),
     localparam int ADDRB_DEPTH_WIDTH = $clog2(NUM_FRAME_BUFFER_PIXELS)
 ) (
-    input wire clk_pixel,
-    input wire rst,
+    input  wire  clk_pixel,
+    input  wire  rst,
     // User interactions
-    input wire start_calibration_step,
-    input wire read_request,
-    input wire should_overwrite_latch,
+    input  wire  start_calibration_step,
+    input  wire  read_request,
+    input  wire  should_overwrite_latch,
     output logic should_overwrite,
 
     // Address, thresh, nframe inputs
@@ -36,13 +38,12 @@ module calibration_step_fsm #(
     input wire detect_0,
     input wire detect_1,
     output calibration_step_state_t state,
-    output logic [LED_ADDRESS_WIDTH-1:0] read_out
-
+    output logic [LED_ADDRESS_WIDTH-1:0] read_out,
+    output logic [WAIT_COUNTER_WIDTH-1:0] wait_counter
 );
 
     logic old_nf;
     logic old_start_calibration_step;
-    logic [WAIT_COUNTER_WIDTH-1:0] wait_counter;
     wire active_draw = ((hcount_in < ACTIVE_H_PIXELS) && (vcount_in < ACTIVE_LINES)) && !rst;
     wire top_left = ((hcount_in[1:0] == 2'b00) && (vcount_in[1:0] == 2'b00));
     wire good_addrb = top_left && active_draw;
@@ -59,18 +60,24 @@ module calibration_step_fsm #(
             old_nf <= new_frame_in;
             old_start_calibration_step <= start_calibration_step;
 
+            if ((state == CAPTURE_FRAME) && new_frame_in) begin
+                should_overwrite <= 0;
+            end else if ((state == IDLE) && should_overwrite_latch) begin
+                should_overwrite <= 1;
+            end
+
             case (state)
                 IDLE: begin
-                    if (start_calibration_step && !old_start_calibration_step) begin
+                    if (start_calibration_step) begin  // && !old_start_calibration_step
                         state <= WAIT_FOR_CAM;
                         wait_counter <= 0;
-                        should_overwrite <= should_overwrite_latch;
                     end
                 end
                 WAIT_FOR_CAM: begin
                     wait_counter <= wait_counter + 1;
                     if (wait_counter == WAIT_CYCLES - 1) begin
                         state <= WAIT_FOR_NFRAME;
+                        wait_counter <= 0;
                     end
                 end
                 WAIT_FOR_NFRAME: begin
@@ -81,7 +88,6 @@ module calibration_step_fsm #(
                 CAPTURE_FRAME: begin
                     if (new_frame_in) begin
                         state <= IDLE;
-                        should_overwrite <= 0;
                     end
                 end
             endcase

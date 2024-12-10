@@ -17,6 +17,7 @@
 `include "hdmi/hdmi_driver.sv"
 `include "cam/camera_configurator.sv"
 `include "calibration/calibration_step_fsm.sv"
+`include "aduli_fsm.sv"
 `default_nettype none
 
 module top_level #(
@@ -84,46 +85,105 @@ module top_level #(
         .LED_ADDRESS_WIDTH(CounterWidth)
     ) id_shower_inst (
         .clk(clk_100_passthrough),
-        .rst(btn[0]),
-        .increment_bit(clean_btn1),
-        .decrement_bit(clean_btn2),
+        .rst(sys_rst_led),
         .next_led_request(next_led_request),
         .green_out(next_green),
         .red_out(next_red),
         .blue_out(next_blue),
         .color_valid(color_valid),
         // .displayed_frame_valid(),
-        .address_bit_num(address_bit_num)
+        .update_address_bit_num(aduli_fsm_inst.led_addr_bit_sel_start_out),
+        .address_bit_num_req(address_bit_num)
+        // .current_address_bit_num()
     );
 
-    clock_cross led_frame_valid_cc (
+    clock_cross #(
+        .WIDTH($bits(calibration_step_fsm_m.state)),
+        .DEPTH_DST(6)
+    ) calibration_step_state_cc (
         .rst_in(sys_rst_pixel),
-        .clk_src_in(clk_100_passthrough),
-        .clk_dst_in(clk_pixel),
-        .data_src_in(id_shower_inst.displayed_frame_valid)
+        .clk_src_in(clk_pixel),
+        .clk_dst_in(clk_100_passthrough),
+        .data_src_in(calibration_step_fsm_m.state)
         // .data_dst_out()
     );
-    clock_cross increment_id (
+    clock_cross #(
+        .DEPTH_DST(6)
+    ) calibration_step_idle_cc (
+        .rst_in(sys_rst_pixel),
+        .clk_src_in(clk_pixel),
+        .clk_dst_in(clk_100_passthrough),
+        .data_src_in(calibration_step_fsm_m.state == IDLE)
+        // .data_dst_out()
+    );
+    clock_cross #(
+        .DEPTH_DST(6)
+    ) we_going_cc (
+        .rst_in(sys_rst_pixel),
+        .clk_src_in(clk_pixel),
+        .clk_dst_in(clk_100_passthrough),
+        .data_src_in((calibration_step_fsm_m.wait_counter < (24'd7_500_000)) && (calibration_step_fsm_m.wait_counter > (24'd5_000_000)) && (calibration_step_fsm_m.state == WAIT_FOR_CAM))
+        // .data_dst_out()
+    );
+
+    debouncer #(
+        .WIDTH($bits(calibration_step_state_cc.data_dst_out)),
+        .DEBOUNCE_TIME_MS(5)
+    ) debounce_metastable_fsm_state (
+        .clk_in  (clk_100_passthrough),
+        .rst_in  (sys_rst_pixel),
+        .dirty_in(calibration_step_state_cc.data_dst_out)
+        // .clean_out()
+    );
+
+    clock_cross #(
+        .DEPTH_DST(6),
+        .WIDTH(2)
+    ) calibration_start_first_cc (
         .rst_in(sys_rst_pixel),
         .clk_src_in(clk_100_passthrough),
         .clk_dst_in(clk_pixel),
-        .data_src_in(clean_btn1)
+        .data_src_in({aduli_fsm_inst.calibration_start_out, aduli_fsm_inst.calibration_first_out})
     );
+
+    logic [3:0] trans_count;
+    calibration_step_state_t prev_step_state;
+    always_ff @(posedge clk_pixel) begin
+        prev_step_state <= calibration_step_fsm_m.state;
+        if (sys_rst_pixel) begin
+            trans_count <= 0;
+        end else begin
+            if ((prev_step_state == 0) && (calibration_step_fsm_m.state == 1)) begin
+                trans_count <= trans_count + 1;
+            end
+        end
+    end
+    logic [7:0] trans_count_cc;
+    calibration_step_state_t prev_step_state_cc;
+    always_ff @(posedge clk_100_passthrough) begin
+        prev_step_state_cc <= debounce_metastable_fsm_state.clean_out;
+        if (sys_rst_led) begin
+            trans_count_cc <= 0;
+        end else begin
+            if ((prev_step_state_cc == 0) && (debounce_metastable_fsm_state.clean_out == 1)) begin
+                trans_count_cc <= trans_count_cc + 1;
+            end
+        end
+    end
 
     logic [CounterWidth-1:0] pixel_led_id;
     calibration_step_fsm #(
         .NUM_LEDS(NUM_LEDS),
         .LED_ADDRESS_WIDTH(CounterWidth),
-        .WAIT_CYCLES(10000000),
+        .WAIT_CYCLES(50_000_000),
         .ACTIVE_H_PIXELS(1280),
         .ACTIVE_LINES(720)
-    ) calibration_step_fsm (
+    ) calibration_step_fsm_m (
         .clk_pixel(clk_pixel),
         .rst(sys_rst_pixel),
-        .increment_id(increment_id.data_dst_out),
+        .start_calibration_step(calibration_start_first_cc.data_dst_out[1]),
+        .should_overwrite_latch(calibration_start_first_cc.data_dst_out[0]),
         .read_request(active_draw_hdmi_ps3),
-        .should_overwrite(1'b0),
-        .displayed_frame_valid(led_frame_valid_cc.data_dst_out),
         .hcount_in(hcount_hdmi_ps3),  // synchronized to detect / threshold outputs
         .vcount_in(vcount_hdmi_ps3),  // synchronized to detect / threshold outputs
         .new_frame_in(nf_hdmi_ps3),
@@ -132,6 +192,35 @@ module top_level #(
         // .state(),
         .read_out(pixel_led_id)
     );
+
+    aduli_fsm #(
+        .NUM_LEDS(NUM_LEDS),
+        .LED_ADDRESS_WIDTH(CounterWidth)
+    ) aduli_fsm_inst (
+        .clk_in(clk_100_passthrough),
+        .rst_in(sys_rst_pixel),
+        .start_in(clean_btn1),
+        // .proceed_in(clean_btn2),
+        .led_display_valid_in(id_shower_inst.displayed_frame_valid),
+        // .calibration_state_in(debounce_metastable_fsm_state.clean_out),
+        .calibration_step_going_in(we_going_cc.data_dst_out),
+        .calibration_step_ready_in(calibration_step_idle_cc.data_dst_out),
+        .led_addr_bit_sel_out(address_bit_num),
+        // .led_addr_bit_sel_start_out(),
+        // .calibration_start_out(),
+        // .calibration_first_out(),
+        .state()
+    );
+
+    clock_cross #(
+        .WIDTH(2)
+    ) aduli_fsm_cc (
+        .rst_in(sys_rst_pixel),
+        .clk_src_in(clk_100_passthrough),
+        .clk_dst_in(clk_pixel),
+        .data_src_in(aduli_fsm_inst.state)
+    );
+
 
     // instantiate pattern modules
     // pat_gradient #(
@@ -166,8 +255,8 @@ module top_level #(
 
 
     // shut up those RGBs
-    assign rgb0 = 0;
-    assign rgb1 = 0;
+    assign rgb0 = aduli_fsm_inst.calibration_started;
+    assign rgb1 = we_going_cc.data_dst_out;
 
     // Clock and Reset Signals
     logic sys_rst_camera;
@@ -202,7 +291,7 @@ module top_level #(
     // this port also is specifically set to high drive by the XDC file.
     assign cam_xclk = clk_xc;
 
-    assign sys_rst_camera = btn[0];  //use for resetting camera side of logic
+    assign sys_rst_camera = btn[0] || btn[2];  //use for resetting camera side of logic
     assign sys_rst_pixel = btn[0];  //use for resetting hdmi/draw side of logic
     assign sys_rst_led = btn[0];  //use for resetting led side of logic
 
@@ -315,7 +404,7 @@ module top_level #(
     threshold mt_blue (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
-        .pixel_in(fb_blue),
+        .pixel_in(cb),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
         .mask_out(detect1)  //single bit if pixel within mask.
@@ -323,7 +412,7 @@ module top_level #(
     threshold mt_red (
         .clk_in(clk_pixel),
         .rst_in(sys_rst_pixel),
-        .pixel_in(fb_red),
+        .pixel_in(cr),
         .lower_bound_in(lower_threshold),
         .upper_bound_in(upper_threshold),
         .mask_out(detect0)  //single bit if pixel within mask.
@@ -641,11 +730,17 @@ module top_level #(
     );
 
     // a handful of debug signals for writing to registers
-    assign led[0] = bus_active;
-    assign led[1] = cr_init_valid;
-    assign led[2] = cr_init_ready;
-    assign led[15:3] = 0;
-
+    assign led[0]   = bus_active;
+    assign led[1]   = cr_init_valid;
+    assign led[2]   = cr_init_ready;
+    assign led[8:3] = 0;
+    assign led[9]   = calibration_step_fsm_m.should_overwrite_latch;
+    assign led[10]  = calibration_step_fsm_m.should_overwrite;
+    assign led[11]  = aduli_fsm_inst.calibration_step_ready_in;
+    assign led[12]  = aduli_fsm_inst.calibration_first_out;
+    assign led[13]  = calibration_start_first_cc.data_dst_out[0];
+    assign led[14]  = aduli_fsm_inst.calibration_start_out;
+    assign led[15]  = calibration_start_first_cc.data_dst_out[1];
 endmodule  // top_level
 
 
