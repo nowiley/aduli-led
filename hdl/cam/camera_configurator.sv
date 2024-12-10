@@ -90,6 +90,9 @@ module camera_configurator #(
                     end
                 end
                 SENT_EXPOSURE_1: begin
+                    update_state <= SENT_EXPOSURE_2;
+                end
+                SENT_EXPOSURE_2: begin
                     update_state <= STOP;
                 end
             endcase
