@@ -75,7 +75,7 @@ module shift_accum_ram #(
         end else if ((request_type_out == DISABLE) || (read_out == DISABLED_VAL)) begin
             sum_out = DISABLED_VAL;  // maintain disable lockout
         end else begin
-            sum_out = (read_out << 1) | summand_sync.data_out;
+            sum_out = {read_out[WIDTH-2:0], summand_sync.data_out};
         end
     end
 
