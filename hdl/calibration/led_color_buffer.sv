@@ -7,11 +7,11 @@
 module led_color_buffer
 #(
     parameter int NUM_LEDS = 50,
-    parameter int LED_ADDRESS_WIDTH = 10,
-    parameter int FBUF_COLOR_WIDTH = 24,
-    localparam int NEXT_LED_REQ_WIDTH = $clog2(NUM_LEDS)
+    parameter int LED_ADDRESS_WIDTH = $clog2(NUM_LEDS),
+    parameter int FBUF_COLOR_WIDTH = 24
 )(  
     input wire rst,
+    input wire wipe,
     // For requests from the calibration_fsm_accum_lookup table
     // Clocked off of HDMI pixel clock
         input wire clk_pixel,
@@ -27,13 +27,35 @@ module led_color_buffer
         output logic [7:0] red_out,
         output logic [7:0] blue_out,
         output logic [FBUF_COLOR_WIDTH-1:0] data_out,
-        output logic color_valid
+        output logic color_valid,
+        output logic wiping
 );
+
+logic [LED_ADDRESS_WIDTH-1:0] address_counter;
+logic last_wipe;
+always_ff @(posedge clk_pixel) begin
+    last_wipe <= wipe;
+    if (rst) begin
+        address_counter <= 0;
+        wiping <= 0;
+    end else if (wipe && !last_wipe) begin
+        wiping <= 1;
+        address_counter <= 0;
+    end else if (wiping) begin
+        if (address_counter == NUM_LEDS-1) begin
+            address_counter <= 0;
+            wiping <= 0;
+        end else begin
+            address_counter <= address_counter + 1;
+        end
+    end
+end
 
 
 logic write_to_buffer;
-assign write_to_buffer = ((led_color_buffer_update_enable) && (led_lookup_address < NUM_LEDS));
+assign write_to_buffer = ((led_color_buffer_update_enable) && (led_lookup_address < NUM_LEDS) && !wiping);
 wire [23:0] write_value = write_to_buffer ? camera_color : 0;
+wire [LED_ADDRESS_WIDTH-1:0] writing_address = wiping ? address_counter : led_lookup_address;
 
 xilinx_true_dual_port_read_first_2_clock_ram #(
     .RAM_WIDTH(FBUF_COLOR_WIDTH),
@@ -41,7 +63,7 @@ xilinx_true_dual_port_read_first_2_clock_ram #(
 ) led_color_ram (
     // INPUT FROM CAMERA
     .clka(clk_pixel),                       // Port A clock
-    .addra(led_lookup_address),             // Port A address bus, width determined from RAM_DEPTH
+    .addra(writing_address),             // Port A address bus, width determined from RAM_DEPTH
     .dina(write_value),                    // Port A RAM input data
     .wea(1'b1),                  // Port A write enable
     .ena(1'b1),                             // Port A RAM Enable, for additional power savings, disable port when not in use
@@ -64,8 +86,8 @@ assign red_out = {data_out[23:20], 4'b0};
 assign green_out = {data_out[15:13], 5'b0};
 assign blue_out = {data_out[7:5], 5'b0};
 
-logic [NEXT_LED_REQ_WIDTH-1:0] last_led_request_address;
-logic [NEXT_LED_REQ_WIDTH-1:0] last_last_led_request_address;
+logic [LED_ADDRESS_WIDTH-1:0] last_led_request_address;
+logic [LED_ADDRESS_WIDTH-1:0] last_last_led_request_address;
 
 always_ff @(posedge clk_led) begin
     if (rst) begin

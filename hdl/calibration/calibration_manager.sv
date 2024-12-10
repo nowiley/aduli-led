@@ -6,7 +6,7 @@
 module calibration_manager 
 #(
     parameter int NUM_LEDS = 50,
-    parameter int LED_ADDRESS_WIDTH = 10,
+    parameter int LED_ADDRESS_WIDTH = $clog2(NUM_LEDS),
     parameter int NUM_FRAME_BUFFER_PIXELS = 360 * 180,
     localparam int CAL_TABLE_COUNTER_WIDTH = $clog2(NUM_FRAME_BUFFER_PIXELS)
 )(
