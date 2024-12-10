@@ -18,6 +18,8 @@
 `include "cam/camera_configurator.sv"
 `include "calibration/calibration_step_fsm.sv"
 `include "aduli_fsm.sv"
+`include "calibration/led_color_buffer.sv"
+`include "pattern/led_out_mux.sv"
 `default_nettype none
 
 module top_level #(
@@ -52,8 +54,8 @@ module top_level #(
     output logic [ 3:0] strand_out   // strand output wire PMODA
 );
 
-    logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
-    logic color_valid;
+    logic [COLOR_WIDTH-1:0] id_shower_next_red, id_shower_next_green, id_shower_next_blue;
+    logic id_shower_color_valid;
     logic [CounterWidth-1:0] next_led_request;
     logic clean_btn1;
     logic clean_btn2;
@@ -87,10 +89,10 @@ module top_level #(
         .clk(clk_100_passthrough),
         .rst(sys_rst_led),
         .next_led_request(next_led_request),
-        .green_out(next_green),
-        .red_out(next_red),
-        .blue_out(next_blue),
-        .color_valid(color_valid),
+        .green_out(id_shower_next_green),
+        .red_out(id_shower_next_red),
+        .blue_out(id_shower_next_blue),
+        .color_valid(id_shower_color_valid),
         // .displayed_frame_valid(),
         .update_address_bit_num(aduli_fsm_inst.led_addr_bit_sel_start_out),
         .address_bit_num_req(address_bit_num)
@@ -221,6 +223,58 @@ module top_level #(
         .data_src_in(aduli_fsm_inst.state)
     );
 
+    logic [COLOR_WIDTH-1:0] led_cbuffer_next_red, led_cbuffer_next_green, led_cbuffer_next_blue;
+    logic led_cbuffer_color_valid;
+
+
+    led_color_buffer # (
+        .NUM_LEDS(NUM_LEDS),
+        .LED_ADDRESS_WIDTH(CounterWidth)
+    ) led_color_buffer_instance (
+        .rst(sys_rst_pixel),
+        // calibration_step_fsm table output 
+        .clk_pixel(clk_pixel),
+        .led_lookup_address(pixel_led_id),
+        .camera_color({fb_red_ps2, fb_green_ps2, fb_blue_ps2}),
+        .led_color_buffer_update_enable(1'b1),
+        // led driver output
+        .clk_led(clk_100_passthrough),
+        .next_led_request_address(next_led_request),
+        .green_out(led_cbuffer_next_green),
+        .red_out(led_cbuffer_next_red),
+        .blue_out(led_cbuffer_next_blue),
+        .color_valid(led_cbuffer_color_valid)
+    );
+
+    logic [COLOR_WIDTH-1:0] next_red, next_green, next_blue;
+    logic color_valid;
+
+    wire led_mux_mode = aduli_fsm_inst.state == DISPLAY ? CAMERA_COLOR_OUT : ID_SHOWER_OUT;
+
+    led_out_mux #(
+        .COLOR_WIDTH(COLOR_WIDTH)
+    ) led_out_mux_inst (
+        // id_shower inputs
+        .led_out_mux_mode(led_mux_mode),
+        .id_shower_green_out(id_shower_next_green),
+        .id_shower_red_out(id_shower_next_red),
+        .id_shower_blue_out(id_shower_next_blue),
+        .id_shower_color_valid(id_shower_color_valid),
+        // led_color_buffer inputs
+        .led_color_buffer_green_out(led_cbuffer_next_green),
+        .led_color_buffer_red_out(led_cbuffer_next_red),
+        .led_color_buffer_blue_out(led_cbuffer_next_blue),
+        .led_color_buffer_color_valid(led_cbuffer_color_valid),
+        // .led_color_buffer_green_out(8'h8F),
+        // .led_color_buffer_red_out(8'h8F),
+        // .led_color_buffer_blue_out(8'h8F),
+        // .led_color_buffer_color_valid(1'b1),
+        // outputs
+        .green_out(next_green),
+        .red_out(next_red),
+        .blue_out(next_blue),
+        .color_valid(color_valid)
+    );
 
     // instantiate pattern modules
     // pat_gradient #(
@@ -733,7 +787,9 @@ module top_level #(
     assign led[0]   = bus_active;
     assign led[1]   = cr_init_valid;
     assign led[2]   = cr_init_ready;
-    assign led[8:3] = 0;
+    assign led[6:3] = 0;
+    assign led[7]   = !led_cbuffer_color_valid;
+    assign led[8]   = aduli_fsm_inst.state == DISPLAY;
     assign led[9]   = calibration_step_fsm_m.should_overwrite_latch;
     assign led[10]  = calibration_step_fsm_m.should_overwrite;
     assign led[11]  = aduli_fsm_inst.calibration_step_ready_in;

@@ -8,7 +8,7 @@ module led_color_buffer
 #(
     parameter int NUM_LEDS = 50,
     parameter int LED_ADDRESS_WIDTH = 10,
-    parameter int CAMERA_COLOR_WIDTH = 16,
+    parameter int FBUF_COLOR_WIDTH = 24,
     localparam int NEXT_LED_REQ_WIDTH = $clog2(NUM_LEDS)
 )(  
     input wire rst,
@@ -16,7 +16,7 @@ module led_color_buffer
     // Clocked off of HDMI pixel clock
         input wire clk_pixel,
         input wire [LED_ADDRESS_WIDTH-1:0] led_lookup_address,
-        input wire [CAMERA_COLOR_WIDTH-1:0] camera_color,
+        input wire [FBUF_COLOR_WIDTH-1:0] camera_color,
         input wire led_color_buffer_update_enable,
     
     // For requests from led driver
@@ -26,23 +26,24 @@ module led_color_buffer
         output logic [7:0] green_out,
         output logic [7:0] red_out,
         output logic [7:0] blue_out,
-        output logic [CAMERA_COLOR_WIDTH-1:0] data_out,
+        output logic [FBUF_COLOR_WIDTH-1:0] data_out,
         output logic color_valid
 );
 
 
 logic write_to_buffer;
-assign write_to_buffer = ((led_color_buffer_update_enable) && (led_lookup_address <= NUM_LEDS));
+assign write_to_buffer = ((led_color_buffer_update_enable) && (led_lookup_address < NUM_LEDS));
+wire [23:0] write_value = write_to_buffer ? camera_color : 0;
 
 xilinx_true_dual_port_read_first_2_clock_ram #(
-    .RAM_WIDTH(CAMERA_COLOR_WIDTH),
+    .RAM_WIDTH(FBUF_COLOR_WIDTH),
     .RAM_DEPTH(NUM_LEDS)
 ) led_color_ram (
     // INPUT FROM CAMERA
     .clka(clk_pixel),                       // Port A clock
     .addra(led_lookup_address),             // Port A address bus, width determined from RAM_DEPTH
-    .dina(camera_color),                    // Port A RAM input data
-    .wea(write_to_buffer),                  // Port A write enable
+    .dina(write_value),                    // Port A RAM input data
+    .wea(1'b1),                  // Port A write enable
     .ena(1'b1),                             // Port A RAM Enable, for additional power savings, disable port when not in use
     .rsta(rst),                             // Port A output reset (does not affect memory contents)
     .douta(),                               // Port A RAM output data
@@ -59,9 +60,9 @@ xilinx_true_dual_port_read_first_2_clock_ram #(
 
 
 // LED DRIVER LOGIC
-assign red_out = {data_out[15:11], 3'b0};
-assign green_out = {data_out[10:5], 2'b0};
-assign blue_out = {data_out[4:0], 3'b0};
+assign red_out = {data_out[23:20], 4'b0};
+assign green_out = {data_out[15:13], 5'b0};
+assign blue_out = {data_out[7:5], 5'b0};
 
 logic [NEXT_LED_REQ_WIDTH-1:0] last_led_request_address;
 logic [NEXT_LED_REQ_WIDTH-1:0] last_last_led_request_address;
@@ -73,11 +74,10 @@ always_ff @(posedge clk_led) begin
     end else begin
         last_last_led_request_address <= last_led_request_address;
         last_led_request_address <= next_led_request_address;
+        // Color is valid if current request is the same as the request the last 2 cycles
+        color_valid <= ((next_led_request_address == last_last_led_request_address) && (last_led_request_address == next_led_request_address));
     end
 end
-
-// Color is valid if current request is the same as the request the last 2 cycles
-assign color_valid = ((next_led_request_address == last_last_led_request_address) && (last_led_request_address == next_led_request_address));
 
 endmodule 
 
