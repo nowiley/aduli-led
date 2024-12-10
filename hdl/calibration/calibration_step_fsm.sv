@@ -62,7 +62,7 @@ module calibration_step_fsm #(
 
             if ((state == CAPTURE_FRAME) && new_frame_in) begin
                 should_overwrite <= 0;
-            end else if (should_overwrite_latch) begin
+            end else if ((state == IDLE) && should_overwrite_latch) begin
                 should_overwrite <= 1;
             end
 
