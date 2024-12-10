@@ -68,6 +68,7 @@ module aduli_fsm #(
                     led_display_valid_latch <= led_display_valid_in ? 1'b1: led_display_valid_latch;
 
                     if ((led_display_valid_latch || led_display_valid_in) && (calibration_step_ready_in)) begin
+                        led_display_valid_latch <= 0;
                         calibration_start_out <= 1;
                         calibration_started <= 0;
                         state <= RUN_CALIB_STEP;
