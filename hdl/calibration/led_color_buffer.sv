@@ -7,9 +7,8 @@
 module led_color_buffer
 #(
     parameter int NUM_LEDS = 50,
-    parameter int LED_ADDRESS_WIDTH = 10,
-    parameter int FBUF_COLOR_WIDTH = 24,
-    localparam int NEXT_LED_REQ_WIDTH = $clog2(NUM_LEDS)
+    parameter int LED_ADDRESS_WIDTH = $clog2(NUM_LEDS),
+    parameter int FBUF_COLOR_WIDTH = 24
 )(  
     input wire rst,
     // For requests from the calibration_fsm_accum_lookup table
@@ -64,8 +63,8 @@ assign red_out = {data_out[23:20], 4'b0};
 assign green_out = {data_out[15:13], 5'b0};
 assign blue_out = {data_out[7:5], 5'b0};
 
-logic [NEXT_LED_REQ_WIDTH-1:0] last_led_request_address;
-logic [NEXT_LED_REQ_WIDTH-1:0] last_last_led_request_address;
+logic [LED_ADDRESS_WIDTH-1:0] last_led_request_address;
+logic [LED_ADDRESS_WIDTH-1:0] last_last_led_request_address;
 
 always_ff @(posedge clk_led) begin
     if (rst) begin
