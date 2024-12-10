@@ -225,13 +225,21 @@ module top_level #(
 
     logic [COLOR_WIDTH-1:0] led_cbuffer_next_red, led_cbuffer_next_green, led_cbuffer_next_blue;
     logic led_cbuffer_color_valid;
-
+    calibration_step_state_t last_calibration_state;
+    always_ff @(posedge clk_pixel) begin
+        if (sys_rst_pixel) begin
+            last_calibration_state <= IDLE;
+        end else begin
+            last_calibration_state <= calibration_step_fsm_m.state;
+        end
+    end
 
     led_color_buffer # (
         .NUM_LEDS(NUM_LEDS),
         .LED_ADDRESS_WIDTH(CounterWidth)
     ) led_color_buffer_instance (
         .rst(sys_rst_pixel),
+        .wipe(calibration_step_fsm_m.state == IDLE),
         // calibration_step_fsm table output 
         .clk_pixel(clk_pixel),
         .led_lookup_address(pixel_led_id),
@@ -787,7 +795,9 @@ module top_level #(
     assign led[0]   = bus_active;
     assign led[1]   = cr_init_valid;
     assign led[2]   = cr_init_ready;
-    assign led[6:3] = 0;
+    assign led[4:3] = 0;
+    assign led[5]   = calibration_step_fsm_m.state == IDLE;
+    assign led[6]   = led_color_buffer_instance.wiping;
     assign led[7]   = !led_cbuffer_color_valid;
     assign led[8]   = aduli_fsm_inst.state == DISPLAY;
     assign led[9]   = calibration_step_fsm_m.should_overwrite_latch;
