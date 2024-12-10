@@ -15,7 +15,7 @@ typedef enum logic [1:0] {
 module calibration_step_fsm #(
     parameter int NUM_LEDS = 50,
     parameter int LED_ADDRESS_WIDTH = 10,
-    parameter int WAIT_CYCLES = 10000000,
+    parameter int WAIT_CYCLES = 5_000_000,
     parameter int ACTIVE_H_PIXELS = 1280,
     parameter int ACTIVE_LINES = 720,
     localparam int downsample_shift = 2,
