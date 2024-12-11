@@ -89,7 +89,7 @@ module camera_reader #(
     localparam MINI_STEP_COUNT = 20_000_000;
     logic [$clog2(MINI_STEP_COUNT)-1:0] mini_step_count;
     localparam VERTICAL_COUNT = 180;
-    localparam VERTICAL_WIDTH = 10;
+    localparam VERTICAL_WIDTH = 18;
     localparam VCOUNT_WIDTH = $clog2(VERTICAL_COUNT);
     logic [VCOUNT_WIDTH-1:0] pattern_v_count;
 
@@ -114,7 +114,7 @@ module camera_reader #(
             if (pattern_v_count == VERTICAL_COUNT - 1) begin
                 pattern_v_count <= 0;
             end else begin
-                pattern_v_count <= pattern_v_count + 1;
+                pattern_v_count <= pattern_v_count + (1 << 4);
             end
         end else begin
             mini_step_count <= mini_step_count + 1;
