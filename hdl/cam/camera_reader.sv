@@ -86,7 +86,14 @@ module camera_reader #(
     logic valid_camera_mem;  //used to enable writing pixel data to frame buffer
     logic [15:0] camera_mem;  //used to pass pixel data into frame buffer
 
-    wire [15:0] pixel_to_write = (pattern_enable) ? {16{1'b1}} : camera_pixel;
+    localparam MINI_STEP_COUNT = 20_000_000;
+    logic [$clog2(MINI_STEP_COUNT)-1:0] mini_step_count;
+    localparam VERTICAL_COUNT = 180;
+    logic [$clog2(VERTICAL_COUNT)-1:0] pattern_v_count;
+
+    wire [15:0] pattern_pixel = pattern_v_count > camera_vcount ? 16'hFFFF : 16'h0000;
+
+    wire [15:0] pixel_to_write = (pattern_enable) ? pattern_pixel : camera_pixel;
 
 
     //TO DO in camera part 1:
@@ -94,6 +101,20 @@ module camera_reader #(
         //create logic to handle wriiting of camera.
         //we want to down sample the data from the camera by a factor of four in both
         //the x and y dimensions! TO DO
+
+        if (sys_rst_camera) begin
+            mini_step_count <= 0;
+            pattern_v_count <= 0;
+        end else if (mini_step_count == MINI_STEP_COUNT - 1) begin
+            mini_step_count <= 0;
+            if (pattern_v_count == VERTICAL_COUNT - 1) begin
+                pattern_v_count <= 0;
+            end else begin
+                pattern_v_count <= pattern_v_count + 1;
+            end
+        end else begin
+            mini_step_count <= mini_step_count + 1;
+        end
 
         //downsample by 4 in x and y
         addra <= camera_hcount + 320 * camera_vcount;
