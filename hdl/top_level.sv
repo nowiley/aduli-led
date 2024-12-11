@@ -716,7 +716,7 @@ module top_level #(
         .data_out({img_red_ps9, img_green_ps9, img_blue_ps9})
     );
 
-    wire should_mark_pixel = (pixel_led_id == sel_led);
+    wire should_mark_pixel = (pixel_led_id == {{(CounterWidth - 5) {1'b1}}, sel_led});
 
     video_mux mvm (
         .bg_in(display_choice),  //choose background
