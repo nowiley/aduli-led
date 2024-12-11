@@ -124,7 +124,7 @@ module top_level #(
         .rst_in(sys_rst_pixel),
         .clk_src_in(clk_pixel),
         .clk_dst_in(clk_100_passthrough),
-        .data_src_in((calibration_step_fsm_m.wait_counter < (24'd7_500_000)) && (calibration_step_fsm_m.wait_counter > (24'd5_000_000)) && (calibration_step_fsm_m.state == WAIT_FOR_CAM))
+        .data_src_in((calibration_step_fsm_m.wait_counter < (calibration_step_fsm_m.WAIT_CYCLES * 3/4)) && (calibration_step_fsm_m.wait_counter > (calibration_step_fsm_m.WAIT_CYCLES * 1/4)) && (calibration_step_fsm_m.state == WAIT_FOR_CAM))
         // .data_dst_out()
     );
 
