@@ -424,6 +424,7 @@ module top_level #(
         .cam_vsync(cam_vsync),
         .addrb(addrb),
         .good_addrb(good_addrb),
+        .pattern_enable(sw[15]),
         .red(fb_red),
         .green(fb_green),
         .blue(fb_blue),
@@ -454,7 +455,7 @@ module top_level #(
     // );
 
     //threshold values used to determine what value  passes:
-    assign lower_threshold = {sw[15:13], 5'b0};
+    assign lower_threshold = 8'h80;  // sw[15:13]
     assign upper_threshold = 8'hFF;
     wire [7:0] exposure = {sw[7], sw[7], sw[6:2], 1'b0};
     wire [4:0] sel_led = sw[12:8];

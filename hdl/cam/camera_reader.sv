@@ -18,6 +18,7 @@ module camera_reader #(
     input wire cam_vsync,
     input wire [FB_SIZE-1:0] addrb,
     input wire good_addrb,
+    input wire pattern_enable,
     output logic [7:0] red,
     green,
     blue,
@@ -85,6 +86,8 @@ module camera_reader #(
     logic valid_camera_mem;  //used to enable writing pixel data to frame buffer
     logic [15:0] camera_mem;  //used to pass pixel data into frame buffer
 
+    wire [15:0] pixel_to_write = (pattern_enable) ? {16{1'b1}} : camera_pixel;
+
 
     //TO DO in camera part 1:
     always_ff @(posedge clk_camera) begin
@@ -95,7 +98,7 @@ module camera_reader #(
         //downsample by 4 in x and y
         addra <= camera_hcount + 320 * camera_vcount;
         valid_camera_mem <= 1;
-        camera_mem <= camera_pixel;
+        camera_mem <= pixel_to_write;
     end
 
     //frame buffer from IP
