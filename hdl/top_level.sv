@@ -794,21 +794,22 @@ module top_level #(
     );
 
     // a handful of debug signals for writing to registers
-    assign led[0]   = bus_active;
-    assign led[1]   = cr_init_valid;
-    assign led[2]   = cr_init_ready;
-    assign led[4:3] = 0;
-    assign led[5]   = calibration_step_fsm_m.state == IDLE;
-    assign led[6]   = led_color_buffer_instance.wiping;
-    assign led[7]   = !led_cbuffer_color_valid;
-    assign led[8]   = aduli_fsm_inst.state == DISPLAY;
-    assign led[9]   = calibration_step_fsm_m.should_overwrite_latch;
-    assign led[10]  = calibration_step_fsm_m.should_overwrite;
-    assign led[11]  = aduli_fsm_inst.calibration_step_ready_in;
-    assign led[12]  = aduli_fsm_inst.calibration_first_out;
-    assign led[13]  = calibration_start_first_cc.data_dst_out[0];
-    assign led[14]  = aduli_fsm_inst.calibration_start_out;
-    assign led[15]  = calibration_start_first_cc.data_dst_out[1];
+    assign led[0]  = bus_active;
+    assign led[1]  = cr_init_valid;
+    assign led[2]  = cr_init_ready;
+    assign led[3]  = calibration_step_fsm_m.state == WAIT_FOR_NFRAME;
+    assign led[4]  = calibration_step_fsm_m.state == WAIT_FOR_CAM;
+    assign led[5]  = calibration_step_fsm_m.state == IDLE;
+    assign led[6]  = led_color_buffer_instance.wiping;
+    assign led[7]  = !led_cbuffer_color_valid;
+    assign led[8]  = aduli_fsm_inst.state == DISPLAY;
+    assign led[9]  = calibration_step_fsm_m.should_overwrite_latch;
+    assign led[10] = calibration_step_fsm_m.should_overwrite;
+    assign led[11] = aduli_fsm_inst.calibration_step_ready_in;
+    assign led[12] = aduli_fsm_inst.calibration_first_out;
+    assign led[13] = calibration_start_first_cc.data_dst_out[0];
+    assign led[14] = aduli_fsm_inst.calibration_start_out;
+    assign led[15] = calibration_start_first_cc.data_dst_out[1];
 endmodule  // top_level
 
 
