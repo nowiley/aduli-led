@@ -177,7 +177,7 @@ module top_level #(
     calibration_step_fsm #(
         .NUM_LEDS(NUM_LEDS),
         .LED_ADDRESS_WIDTH(CounterWidth),
-        .WAIT_CYCLES(10_000_000),
+        .WAIT_CYCLES(5_000_000),
         .ACTIVE_H_PIXELS(1280),
         .ACTIVE_LINES(720)
     ) calibration_step_fsm_m (
