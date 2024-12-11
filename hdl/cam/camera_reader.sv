@@ -89,9 +89,13 @@ module camera_reader #(
     localparam MINI_STEP_COUNT = 20_000_000;
     logic [$clog2(MINI_STEP_COUNT)-1:0] mini_step_count;
     localparam VERTICAL_COUNT = 180;
-    logic [$clog2(VERTICAL_COUNT)-1:0] pattern_v_count;
+    localparam VERTICAL_WIDTH = 10;
+    localparam VCOUNT_WIDTH = $clog2(VERTICAL_COUNT);
+    logic [VCOUNT_WIDTH-1:0] pattern_v_count;
 
-    wire [15:0] pattern_pixel = pattern_v_count > camera_vcount ? 16'hFFFF : 16'h0000;
+    wire [VCOUNT_WIDTH-1:0] bottom = (VERTICAL_WIDTH > pattern_v_count) ? 0 : pattern_v_count - VERTICAL_WIDTH;
+
+    wire [15:0] pattern_pixel = ((pattern_v_count > camera_vcount) && (bottom < camera_vcount)) ? 16'hFFFF : 16'h0000;
 
     wire [15:0] pixel_to_write = (pattern_enable) ? pattern_pixel : camera_pixel;
 
