@@ -73,8 +73,10 @@ module camera_configurator #(
                 bram_din = {16'h3502, lo_nibble, 4'b0};
             end
             SENT_EXPOSURE_2: begin
-                update_addr = 240;
-                bram_din = {16'h3503, 6'b0, manual_exposure, 1'b0};
+                update_addr = 242;
+                bram_din = {
+                    16'h3503, 6'b0, manual_exposure, manual_exposure
+                };  // technically gain, exposure
             end
         endcase
     end

@@ -82,9 +82,9 @@ xilinx_true_dual_port_read_first_2_clock_ram #(
 
 
 // LED DRIVER LOGIC
-assign red_out = {data_out[23:20], 4'b0};
-assign green_out = {data_out[15:13], 5'b0};
-assign blue_out = {data_out[7:5], 5'b0};
+assign red_out = {4'b0, data_out[23:20]};
+assign green_out = {4'b0, data_out[15:12]};
+assign blue_out = {4'b0, data_out[7:4]};
 
 logic [LED_ADDRESS_WIDTH-1:0] last_led_request_address;
 logic [LED_ADDRESS_WIDTH-1:0] last_last_led_request_address;

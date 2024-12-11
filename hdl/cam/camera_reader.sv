@@ -18,6 +18,7 @@ module camera_reader #(
     input wire cam_vsync,
     input wire [FB_SIZE-1:0] addrb,
     input wire good_addrb,
+    input wire pattern_enable,
     output logic [7:0] red,
     green,
     blue,
@@ -85,6 +86,19 @@ module camera_reader #(
     logic valid_camera_mem;  //used to enable writing pixel data to frame buffer
     logic [15:0] camera_mem;  //used to pass pixel data into frame buffer
 
+    localparam MINI_STEP_COUNT = 20_000_000;
+    logic [$clog2(MINI_STEP_COUNT)-1:0] mini_step_count;
+    localparam VERTICAL_COUNT = 180;
+    localparam VERTICAL_WIDTH = 18;
+    localparam VCOUNT_WIDTH = $clog2(VERTICAL_COUNT);
+    logic [VCOUNT_WIDTH-1:0] pattern_v_count;
+
+    wire [VCOUNT_WIDTH-1:0] bottom = (VERTICAL_WIDTH > pattern_v_count) ? 0 : pattern_v_count - VERTICAL_WIDTH;
+
+    wire [15:0] pattern_pixel = ((pattern_v_count > camera_vcount) && (bottom < camera_vcount)) ? 16'hFFFF : 16'h0000;
+
+    wire [15:0] pixel_to_write = (pattern_enable) ? pattern_pixel : camera_pixel;
+
 
     //TO DO in camera part 1:
     always_ff @(posedge clk_camera) begin
@@ -92,10 +106,24 @@ module camera_reader #(
         //we want to down sample the data from the camera by a factor of four in both
         //the x and y dimensions! TO DO
 
+        if (sys_rst_camera) begin
+            mini_step_count <= 0;
+            pattern_v_count <= 0;
+        end else if (mini_step_count == MINI_STEP_COUNT - 1) begin
+            mini_step_count <= 0;
+            if (pattern_v_count == VERTICAL_COUNT - 1) begin
+                pattern_v_count <= 0;
+            end else begin
+                pattern_v_count <= pattern_v_count + (1 << 4);
+            end
+        end else begin
+            mini_step_count <= mini_step_count + 1;
+        end
+
         //downsample by 4 in x and y
         addra <= camera_hcount + 320 * camera_vcount;
         valid_camera_mem <= 1;
-        camera_mem <= camera_pixel;
+        camera_mem <= pixel_to_write;
     end
 
     //frame buffer from IP

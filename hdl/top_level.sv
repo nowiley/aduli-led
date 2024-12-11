@@ -124,7 +124,7 @@ module top_level #(
         .rst_in(sys_rst_pixel),
         .clk_src_in(clk_pixel),
         .clk_dst_in(clk_100_passthrough),
-        .data_src_in((calibration_step_fsm_m.wait_counter < (24'd7_500_000)) && (calibration_step_fsm_m.wait_counter > (24'd5_000_000)) && (calibration_step_fsm_m.state == WAIT_FOR_CAM))
+        .data_src_in((calibration_step_fsm_m.wait_counter < (calibration_step_fsm_m.WAIT_CYCLES * 3/4)) && (calibration_step_fsm_m.wait_counter > (calibration_step_fsm_m.WAIT_CYCLES * 1/4)) && (calibration_step_fsm_m.state == WAIT_FOR_CAM))
         // .data_dst_out()
     );
 
@@ -177,7 +177,7 @@ module top_level #(
     calibration_step_fsm #(
         .NUM_LEDS(NUM_LEDS),
         .LED_ADDRESS_WIDTH(CounterWidth),
-        .WAIT_CYCLES(50_000_000),
+        .WAIT_CYCLES(5_000_000),
         .ACTIVE_H_PIXELS(1280),
         .ACTIVE_LINES(720)
     ) calibration_step_fsm_m (
@@ -424,6 +424,7 @@ module top_level #(
         .cam_vsync(cam_vsync),
         .addrb(addrb),
         .good_addrb(good_addrb),
+        .pattern_enable(sw[15]),
         .red(fb_red),
         .green(fb_green),
         .blue(fb_blue),
@@ -454,7 +455,7 @@ module top_level #(
     // );
 
     //threshold values used to determine what value  passes:
-    assign lower_threshold = {sw[15:13], 5'b0};
+    assign lower_threshold = 8'h80;  // sw[15:13]
     assign upper_threshold = 8'hFF;
     wire [7:0] exposure = {sw[7], sw[7], sw[6:2], 1'b0};
     wire [4:0] sel_led = sw[12:8];
@@ -715,7 +716,7 @@ module top_level #(
         .data_out({img_red_ps9, img_green_ps9, img_blue_ps9})
     );
 
-    wire should_mark_pixel = (pixel_led_id == sel_led);
+    wire should_mark_pixel = (pixel_led_id == {{(CounterWidth - 5) {1'b1}}, sel_led});
 
     video_mux mvm (
         .bg_in(display_choice),  //choose background
@@ -793,21 +794,22 @@ module top_level #(
     );
 
     // a handful of debug signals for writing to registers
-    assign led[0]   = bus_active;
-    assign led[1]   = cr_init_valid;
-    assign led[2]   = cr_init_ready;
-    assign led[4:3] = 0;
-    assign led[5]   = calibration_step_fsm_m.state == IDLE;
-    assign led[6]   = led_color_buffer_instance.wiping;
-    assign led[7]   = !led_cbuffer_color_valid;
-    assign led[8]   = aduli_fsm_inst.state == DISPLAY;
-    assign led[9]   = calibration_step_fsm_m.should_overwrite_latch;
-    assign led[10]  = calibration_step_fsm_m.should_overwrite;
-    assign led[11]  = aduli_fsm_inst.calibration_step_ready_in;
-    assign led[12]  = aduli_fsm_inst.calibration_first_out;
-    assign led[13]  = calibration_start_first_cc.data_dst_out[0];
-    assign led[14]  = aduli_fsm_inst.calibration_start_out;
-    assign led[15]  = calibration_start_first_cc.data_dst_out[1];
+    assign led[0]  = bus_active;
+    assign led[1]  = cr_init_valid;
+    assign led[2]  = cr_init_ready;
+    assign led[3]  = calibration_step_fsm_m.state == WAIT_FOR_NFRAME;
+    assign led[4]  = calibration_step_fsm_m.state == WAIT_FOR_CAM;
+    assign led[5]  = calibration_step_fsm_m.state == IDLE;
+    assign led[6]  = led_color_buffer_instance.wiping;
+    assign led[7]  = !led_cbuffer_color_valid;
+    assign led[8]  = aduli_fsm_inst.state == DISPLAY;
+    assign led[9]  = calibration_step_fsm_m.should_overwrite_latch;
+    assign led[10] = calibration_step_fsm_m.should_overwrite;
+    assign led[11] = aduli_fsm_inst.calibration_step_ready_in;
+    assign led[12] = aduli_fsm_inst.calibration_first_out;
+    assign led[13] = calibration_start_first_cc.data_dst_out[0];
+    assign led[14] = aduli_fsm_inst.calibration_start_out;
+    assign led[15] = calibration_start_first_cc.data_dst_out[1];
 endmodule  // top_level
 
 
