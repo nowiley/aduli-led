@@ -74,7 +74,7 @@ module camera_configurator #(
             end
             SENT_EXPOSURE_2: begin
                 update_addr = 240;
-                bram_din = {16'h3503, 6'b0, manual_exposure, 1'b0};
+                bram_din = {16'h3503, 7'b0, manual_exposure};
             end
         endcase
     end
