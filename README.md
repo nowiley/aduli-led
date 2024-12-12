@@ -12,6 +12,7 @@ Auto-calibrating Display using Unconstrained Layouts of Individually-addressable
 ### Demo
 
 ![Calibration demo](./img/calib.gif)
+
 $\log(n)$ calibration
 
 #### Camera feed demos
