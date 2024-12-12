@@ -20,6 +20,7 @@
 `include "aduli_fsm.sv"
 `include "calibration/led_color_buffer.sv"
 `include "pattern/led_out_mux.sv"
+`include "pattern/moving_pix.sv"
 `default_nettype none
 
 module top_level #(
@@ -259,11 +260,26 @@ module top_level #(
 
     wire  led_mux_mode = aduli_fsm_inst.state == DISPLAY ? CAMERA_COLOR_OUT : ID_SHOWER_OUT;
 
+    moving_pix #(
+        .NUM_LEDS(NUM_LEDS),
+        .FRAMES_PER_LED(5)
+    ) moving_pix_inst (
+        .rst_in(sys_rst_led),
+        .clk_in(clk_100_passthrough),
+        .next_led_request(next_led_request),
+        .green_out(),
+        .red_out(),
+        .blue_out(),
+        .color_ready()
+    );
+
     led_out_mux #(
         .COLOR_WIDTH(COLOR_WIDTH)
     ) led_out_mux_inst (
         // id_shower inputs
         .led_out_mux_mode(led_mux_mode),
+        .moving_override(sw[14]),
+        //
         .id_shower_green_out(id_shower_next_green),
         .id_shower_red_out(id_shower_next_red),
         .id_shower_blue_out(id_shower_next_blue),
@@ -277,6 +293,11 @@ module top_level #(
         // .led_color_buffer_red_out(8'h8F),
         // .led_color_buffer_blue_out(8'h8F),
         // .led_color_buffer_color_valid(1'b1),
+        // moving pixel inputs
+        .moving_pixel_green_out(moving_pix_inst.green_out),
+        .moving_pixel_red_out(moving_pix_inst.red_out),
+        .moving_pixel_blue_out(moving_pix_inst.blue_out),
+        .moving_pixel_color_valid(moving_pix_inst.color_ready),
         // outputs
         .green_out(next_green),
         .red_out(next_red),

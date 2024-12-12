@@ -13,6 +13,7 @@ module led_out_mux #(
     parameter int COLOR_WIDTH = 8 
 )(
     input wire led_out_mux_t        led_out_mux_mode,
+    input wire                      moving_override,
     // LED SHOWER INPUTS
     input wire [COLOR_WIDTH-1:0]    id_shower_green_out,
     input wire [COLOR_WIDTH-1:0]    id_shower_red_out,
@@ -23,6 +24,11 @@ module led_out_mux #(
     input wire [COLOR_WIDTH-1:0]    led_color_buffer_red_out,
     input wire [COLOR_WIDTH-1:0]    led_color_buffer_blue_out,
     input wire                      led_color_buffer_color_valid,
+    // Moving Pixel Inputs
+    input wire [COLOR_WIDTH-1:0]    moving_pixel_green_out,
+    input wire [COLOR_WIDTH-1:0]    moving_pixel_red_out,
+    input wire [COLOR_WIDTH-1:0]    moving_pixel_blue_out,
+    input wire                      moving_pixel_color_valid,
     // OUTPUTS
     output logic [COLOR_WIDTH-1:0]  green_out,
     output logic [COLOR_WIDTH-1:0]  red_out,
@@ -31,7 +37,12 @@ module led_out_mux #(
 );
 
 always_comb begin
-    if (led_out_mux_mode == ID_SHOWER_OUT) begin
+    if (moving_override) begin
+        green_out = moving_pixel_green_out;
+        red_out = moving_pixel_red_out;
+        blue_out = moving_pixel_blue_out;
+        color_valid = moving_pixel_color_valid;
+    end else if (led_out_mux_mode == ID_SHOWER_OUT) begin
         green_out = id_shower_green_out;
         red_out = id_shower_red_out;
         blue_out = id_shower_blue_out;
